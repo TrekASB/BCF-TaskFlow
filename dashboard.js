@@ -1,62 +1,79 @@
 (()=>{'use strict';
-const $=s=>document.querySelector(s), E=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const done=s=>/^(closed|done|completed|resolved|ferdig|lukket)$/i.test(String(s||''));
-const norm=s=>done(s)?'Ferdig':/^(in progress|pågår|active)$/i.test(String(s||''))?'Pågår':'Ny';
-const date=v=>{if(!v)return null;const d=new Date(v);return Number.isFinite(d.getTime())?d:null};
-const week=d=>{const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));const y=t.getUTCFullYear();const jan=new Date(Date.UTC(y,0,1));return y+'-W'+String(Math.ceil((((t-jan)/86400000)+1)/7)).padStart(2,'0')};
-const tags=t=>{const v=t.labels??t.topic_labels??t.tags??[];return Array.isArray(v)?v.map(x=>typeof x==='string'?x:(x?.name||x?.label||'')).filter(Boolean):typeof v==='string'&&v?[v]:[]};
-const assignee=t=>{const a=t.assigned_to??t.assignee??'';return typeof a==='string'?(a||'Ikke tildelt'):(a?.email||a?.name||'Ikke tildelt')};
-const weight=t=>Math.max(1,Math.min(10,Number(t.weight)||1));
-const pct=t=>[0,25,50,75,100].includes(Number(t.completion))?Number(t.completion):(done(t.status)?100:0);
-const progress=ts=>ts.length?Math.round(ts.reduce((s,t)=>s+weight(t)*pct(t),0)/ts.reduce((s,t)=>s+weight(t),0)):null;
-let active='topic',filterWeekFrom='',filterWeekTo='',filterTag='',filterAssignee='';
-function group(rows,fn){const m=new Map();rows.forEach(r=>{for(const k of fn(r))m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])}
-function bar(rows){const max=Math.max(1,...rows.map(r=>r[1]));return rows.length?rows.map(([k,v])=>'<div class="bd-bar"><span title="'+E(k)+'">'+E(k)+'</span><div class="bd-track"><div style="width:'+100*v/max+'%"></div></div><strong>'+v+'</strong></div>').join(''):'<p class="meta">Ingen data for valgt filter.</p>'}
-function chartBars(values,colors){const max=Math.max(1,...values.map(x=>x[1]));return '<div class="bd-colchart">'+values.map(([label,n],i)=>'<div class="bd-colitem"><b>'+n+'</b><div class="bd-colbox"><div style="height:'+n/max*100+'%;background:'+(colors?.[i%colors.length]||'#0c66e4')+'"></div></div><small>'+E(label)+'</small></div>').join('')+'</div>'}
-function card(title,content,hint=''){return '<section class="bd-card"><h3>'+title+'</h3>'+(hint?'<p class="meta">'+hint+'</p>':'')+content+'</section>'}
-function table(headers,rows){return '<div class="bd-overflow"><table class="bd-table"><thead><tr>'+headers.map(x=>'<th>'+E(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
-function row(cells){return '<tr>'+cells.map(x=>'<td>'+x+'</td>').join('')+'</tr>'}
-function render(topics,parse,open,project){
-const root=$('#dashboard');if(!root)return;
-const raw=topics.map(t=>{let ts=[];try{ts=parse(t).tasks||[]}catch{}return {t,ts,tag:tags(t),owner:assignee(t),st:norm(t.topic_status),pr:t.priority||'Ikke angitt',created:date(t.creation_date||t.created_at),closed:date(t.closed_date||t.resolved_date),due:date(t.due_date),p:progress(ts)}});
-const weeks=[...new Set(raw.map(r=>r.created?week(r.created):null).filter(Boolean))].sort();
-const allTags=[...new Set(raw.flatMap(r=>r.tag))].sort(),allOwners=[...new Set(raw.map(r=>r.owner))].sort();
-const opt=(items,current,all)=>'<option value="">'+all+'</option>'+items.map(x=>'<option value="'+E(x)+'" '+(x===current?'selected':'')+'>'+E(x)+'</option>').join('');
-const selected=raw.filter(r=>(!filterTag||r.tag.includes(filterTag))&&(!filterAssignee||r.owner===filterAssignee)&&(!filterWeekFrom||r.created&&week(r.created)>=filterWeekFrom)&&(!filterWeekTo||r.created&&week(r.created)<=filterWeekTo));
-const subs=selected.flatMap(r=>r.ts);const p=progress(subs);
-const kpis=[['Totale saker',selected.length],['Åpne saker',selected.filter(r=>r.st!=='Ferdig').length],['Lukkede saker',selected.filter(r=>r.st==='Ferdig').length],['Underoppgaver',subs.length],['Vektet fremdrift',p===null?'–':p+' %'],['Klare til lukking',selected.filter(r=>r.st!=='Ferdig'&&r.ts.length&&r.p===100).length]];
-root.innerHTML='<div class="bd-controls"><span class="bd-filtername">PERIODE</span><label>Fra uke <select id="bdFrom">'+opt(weeks,filterWeekFrom,'(alle)')+'</select></label><label>Til uke <select id="bdTo">'+opt(weeks,filterWeekTo,'(alle)')+'</select></label><label>FAG <select id="bdTag">'+opt(allTags,filterTag,'(alle)')+'</select></label><label>ASSIGNEE <select id="bdUser">'+opt(allOwners,filterAssignee,'(alle)')+'</select></label><button id="bdReset">Nullstill</button><button id="bdPrint">Skriv ut</button></div>'+
-'<div class="bd-tabs">'+[['topic','Topic dashboard'],['vdc','VDC dashboard'],['assignee','Assignee dashboard']].map(([id,n])=>'<button class="'+(id===active?'on':'')+'" data-bdtab="'+id+'">'+n+'</button>').join('')+'</div>'+
-'<div class="bd-heading">'+(active==='topic'?'FAG & OVERSIKT':active==='vdc'?'ANALYSE & KPI':'ASSIGNEE STATISTIKK')+' <span>'+E(project||'')+' · '+selected.length+' av '+raw.length+' saker</span></div>'+
-'<div id="bdContent"></div>';
-const statusGroups=group(selected,r=>[r.st]),tagGroups=group(selected,r=>r.tag.length?r.tag:['Uten fag/tag']);
-const openLink=r=>'<button class="bd-open" data-open="'+E(r.t.guid)+'">'+E(r.t.title||'Uten tittel')+'</button>';
-if(active==='topic'){
- const tagStatus=tagGroups.map(([name,total])=>{const sub=selected.filter(r=>(r.tag.length?r.tag:['Uten fag/tag']).includes(name));return row([E(name),total,sub.filter(r=>r.st==='Ferdig').length,sub.filter(r=>r.st==='Pågår').length,sub.filter(r=>r.st==='Ny').length])});
- $('#bdContent').innerHTML='<div class="bd-two">'+card('Fag (Tag) – hovedfordeling',bar(tagGroups),'Saker per fag. En sak kan ha flere fag.')+card('Fag (Tag) – detaljer per status',table(['Fag','Totalt','Ferdig','Pågår','Ny'],tagStatus),'Klikk på en fagruppe i filteret for å avgrense rapporten.')+'</div>'+card('Hovedsaker – fremdrift',table(['Sak','Fag','Ansvarlig','Status','Underoppgaver','Fremdrift'],selected.map(r=>row([openLink(r),E(r.tag.join(', ')||'–'),E(r.owner),E(r.t.topic_status),r.ts.length,r.p===null?'–':r.p+' %']))));
-}else if(active==='vdc'){
- const w=new Map();for(const r of selected){if(r.created){const k=week(r.created),x=w.get(k)||{created:0,closed:0};x.created++;w.set(k,x)}if(r.st==='Ferdig'&&r.closed){const k=week(r.closed),x=w.get(k)||{created:0,closed:0};x.closed++;w.set(k,x)}}const allWeeks=[...w].sort((a,b)=>a[0].localeCompare(b[0]));const missing=selected.filter(r=>r.st==='Ferdig'&&!r.closed).length;
- const age=selected.filter(r=>r.st!=='Ferdig'&&r.created).map(r=>Math.max(0,Math.floor((Date.now()-r.created)/86400000)));
- const summaries=kpis.map(([k,v])=>'<div class="bd-stat"><small>'+E(k)+'</small><b>'+E(v)+'</b></div>').join('');
- const createdRows=allWeeks.map(([k,v])=>row([E(k),v.created,v.closed]));
- $('#bdContent').innerHTML='<div class="bd-stats">'+summaries+'</div><div class="bd-two">'+card('Status – hovedsaker',chartBars(statusGroups,['#579dff','#f5b800','#22a06b']))+card('Priority – hovedsaker',bar(group(selected,r=>[r.pr])))+card('Created vs Closed – per uke',table(['Uke','Opprettet','Lukket'],createdRows),missing?missing+' lukkede saker mangler sikker lukkedato.':'Basert på opprettetdato og faktisk lukkedato.')+card('WIP og Backlog',bar([['WIP – pågår',selected.filter(r=>r.st==='Pågår').length],['Backlog – ny/åpen',selected.filter(r=>r.st==='Ny').length]]),'Nåværende status, ikke historisk WIP. Gjennomsnittlig alder åpne: '+(age.length?Math.round(age.reduce((a,b)=>a+b,0)/age.length)+' dager':'Ukjent'))+'</div>';
-}else{
- const owners=group(selected,r=>[r.owner]);
- const matrix=owners.map(([name,n])=>{const list=selected.filter(r=>r.owner===name);return row([E(name),n,list.filter(r=>r.st==='Ny').length,list.filter(r=>r.st==='Pågår').length,list.filter(r=>r.st==='Ferdig').length])});
- const dates=group(selected.filter(r=>r.created),r=>[week(r.created)]);
- $('#bdContent').innerHTML='<div class="bd-two">'+card('Saker per Assignee',bar(owners),'Arbeidsmengde per ansvarlig')+card('Assignee: Status-fordeling',table(['Ansvarlig','Totalt','Ny','Pågår','Ferdig'],matrix))+card('Assignee: Saker over tid',bar(dates),'Opprettede saker per uke for valgt bruker/fag')+card('Gjennomsnittlig cycle time', '<p class="meta">Beregnes ikke uten pålitelige datoer for både opprettelse og lukking. Ingen estimater fra siste endringsdato.</p>')+'</div>'+card('Ansvarlig – detaljert oversikt',table(['Sak','Status','Fag','Prioritet','Fremdrift'],selected.map(r=>row([openLink(r),E(r.t.topic_status),E(r.tag.join(', ')||'–'),E(r.pr),r.p===null?'–':r.p+' %']))));
+const q=s=>document.querySelector(s), esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const done=x=>/^(done|closed|completed|resolved|ferdig|lukket)$/i.test(String(x||''));
+const status=x=>done(x)?'Ferdig':/^(in progress|pågår|active)$/i.test(String(x||''))?'Pågår':/^(blocked|blokkert)$/i.test(String(x||''))?'Blokkert':'Ny';
+const dates=x=>{if(!x)return null;const d=new Date(x);return Number.isFinite(+d)?d:null};
+const week=d=>{const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));const y=x.getUTCFullYear();return y+'-W'+String(Math.ceil(((x-new Date(Date.UTC(y,0,1)))/86400000+1)/7)).padStart(2,'0')};
+const tags=t=>{const v=t.labels??t.topic_labels??t.tags??[];return Array.isArray(v)?v.map(x=>typeof x==='string'?x:x?.name||x?.label||'').filter(Boolean):typeof v==='string'?[v]:[]};
+const assignee=x=>{const v=x||'';return typeof v==='string'?(v||'Ikke tildelt'):(v.email||v.name||'Ikke tildelt')};
+const percent=t=>[0,25,50,75,100].includes(Number(t.completion))?Number(t.completion):(done(t.status)?100:0);
+const weight=t=>{const w=Number(t.weight);return Number.isFinite(w)&&w>0?w:1};
+const progress=ts=>ts.length?Math.round(ts.reduce((s,t)=>s+weight(t)*percent(t),0)/ts.reduce((s,t)=>s+weight(t),0)):null;
+let active='topic',filter={from:'',to:'',tag:'',user:''},charts=[];
+const COLORS=['#0c66e4','#e8440a','#21895e','#f5b400','#8b5cf6','#0891b2','#bd185d','#4d7c0f'];
+const count=(rows,fn)=>{const m=new Map();for(const x of rows){for(const k of fn(x))m.set(k,(m.get(k)||0)+1)}return [...m].sort((a,b)=>b[1]-a[1])};
+const opts=(vals,sel)=>'<option value="">(alle)</option>'+vals.map(v=>'<option value="'+esc(v)+'" '+(sel===v?'selected':'')+'>'+esc(v)+'</option>').join('');
+const card=(title,content,hint='')=>'<section class="bd-card"><h3>'+esc(title)+'</h3>'+(hint?'<p class="meta">'+esc(hint)+'</p>':'')+content+'</section>';
+const placeholder=id=>'<div class="bd-chart-box"><canvas id="'+id+'"></canvas></div>';
+const table=(headers,rows)=>'<div class="bd-overflow"><table class="bd-table"><thead><tr>'+headers.map(s=>'<th>'+esc(s)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+const tr=cells=>'<tr>'+cells.map(x=>'<td>'+x+'</td>').join('')+'</tr>';
+function createChart(id,type,labels,datasets,options={}){
+ const canvas=document.getElementById(id);if(!canvas)return;
+ if(!window.Chart){canvas.replaceWith(Object.assign(document.createElement('p'),{textContent:'Diagram-biblioteket kunne ikke lastes.'}));return}
+ const chart=new Chart(canvas,{type,data:{labels,datasets:datasets.map((d,i)=>({...d,backgroundColor:d.backgroundColor??(type==='pie'?COLORS:COLORS[i%COLORS.length]),borderColor:d.borderColor??COLORS[i%COLORS.length],borderWidth:1}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:datasets.length>1||type==='pie',position:'top'},datalabels:{display:type==='pie',color:'#fff',font:{weight:'bold'},formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return total&&v?Math.round(v/total*100)+'%':''}}},scales:type==='pie'?{}:{y:{beginAtZero:true,ticks:{precision:0}},x:{ticks:{maxRotation:45}}},...options}});
+ charts.push(chart);
 }
-// Jira-inspired parent/subtask overview. Parent issues count once; child progress remains separate.
- const treeRows=selected.flatMap(r=>[
-  row(['<strong>▣ '+openLink(r)+'</strong>',E(r.t.topic_status||'–'),E(r.owner),r.p===null?'–':r.p+' %','Hovedsak']),
-  ...r.ts.map(t=>row(['<span class="bd-childrow">↳ '+E(t.title||'Uten tittel')+'</span>',E(t.blocked?'Blokkert':t.status||'Ny'),E(t.assignee||'Ikke tildelt'),E(t.completion??(t.status==='Done'?100:0))+' %','Underoppgave']))
- ]);
- $('#bdContent').insertAdjacentHTML('beforeend',card('Hovedoppgaver og tilhørende underoppgaver',table(['Sak / underoppgave','Status','Ansvarlig','Ferdigstillelse','Nivå'],treeRows),'Hierarkisk oversikt. Hovedsaker og underoppgaver rapporteres på separate nivåer for å unngå dobbeltelling.'));
- root.querySelectorAll('[data-bdtab]').forEach(el=>el.onclick=()=>{active=el.dataset.bdtab;render(topics,parse,open,project)});
-root.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>open(el.dataset.open));
-for(const [sel,set] of [['#bdFrom',v=>filterWeekFrom=v],['#bdTo',v=>filterWeekTo=v],['#bdTag',v=>filterTag=v],['#bdUser',v=>filterAssignee=v]])$(sel).onchange=e=>{set(e.target.value);render(topics,parse,open,project)};
-$('#bdReset').onclick=()=>{filterWeekFrom='';filterWeekTo='';filterTag='';filterAssignee='';render(topics,parse,open,project)};
-$('#bdPrint').onclick=()=>window.print();
+function drawBars(id,rows,label){createChart(id,'bar',rows.map(x=>x[0]),[{label,data:rows.map(x=>x[1])}])}
+function drawPie(id,rows){createChart(id,'pie',rows.map(x=>x[0]),[{data:rows.map(x=>x[1])}])}
+function render(topics,parse,onOpen,projectName){
+ const root=q('#dashboard');if(!root)return;
+ for(const c of charts)c.destroy();charts=[];
+ const parents=topics.map(t=>{let ts=[];try{ts=parse(t).tasks||[]}catch{}return {kind:'parent',id:t.guid,parentId:t.guid,title:t.title||'Uten tittel',owner:assignee(t.assigned_to),fags:tags(t),status:status(t.topic_status),rawStatus:t.topic_status||'',priority:t.priority||'Ikke angitt',type:t.topic_type||'Hovedsak',created:dates(t.creation_date||t.created_at),closed:dates(t.closed_date||t.resolved_date),due:dates(t.due_date),tasks:ts,p:progress(ts)}});
+ const children=parents.flatMap(p=>p.tasks.map(t=>({kind:'child',id:t.id,parentId:p.id,title:t.title||'Uten tittel',parentTitle:p.title,owner:assignee(t.assignee),fags:t.discipline?[t.discipline]:p.fags,status:t.blocked?'Blokkert':percent(t)===100?'Ferdig':status(t.status),rawStatus:t.status||'New',priority:t.priority||p.priority,type:'Underoppgave',created:dates(t.createdAt||t.creationDate),closed:dates(t.closedAt||t.completedAt),due:dates(t.dueDate),p:percent(t),weight:weight(t)})));
+ const all=[...parents,...children];
+ const weeks=[...new Set(all.map(x=>x.created?week(x.created):null).filter(Boolean))].sort();
+ const fags=[...new Set(all.flatMap(x=>x.fags))].sort(),users=[...new Set(all.map(x=>x.owner))].sort();
+ const selected=all.filter(x=>(!filter.tag||x.fags.includes(filter.tag))&&(!filter.user||x.owner===filter.user)&&(!filter.from||x.created&&week(x.created)>=filter.from)&&(!filter.to||x.created&&week(x.created)<=filter.to));
+ const p=selected.filter(x=>x.kind==='parent'),c=selected.filter(x=>x.kind==='child');
+ root.innerHTML='<div class="bd-controls"><span class="bd-filtername">PERIODE</span><label>Fra uke <select id="bdFrom">'+opts(weeks,filter.from)+'</select></label><label>Til uke <select id="bdTo">'+opts(weeks,filter.to)+'</select></label><label>FAG <select id="bdTag">'+opts(fags,filter.tag)+'</select></label><label>ASSIGNEE <select id="bdUser">'+opts(users,filter.user)+'</select></label><button id="bdReset">Nullstill</button><button id="bdPrint">Skriv ut</button></div>'+
+ '<div class="bd-tabs">'+[['topic','Topic dashboard'],['vdc','VDC dashboard'],['assignee','Assignee dashboard']].map(([k,l])=>'<button class="'+(active===k?'on':'')+'" data-bdtab="'+k+'">'+l+'</button>').join('')+'</div>'+
+ '<div class="bd-heading">'+(active==='topic'?'FAG & OVERSIKT':active==='vdc'?'ANALYSE & KPI':'ASSIGNEE STATISTIKK')+' <span>'+esc(projectName||'')+'</span></div>'+
+ '<div class="bd-stats">'+[['ALLE SAKER',selected.length],['HOVEDSAKER',p.length],['UNDEROPPGAVER',c.length],['ÅPNE SAKER',selected.filter(x=>x.status!=='Ferdig').length],['FERDIGE SAKER',selected.filter(x=>x.status==='Ferdig').length],['UNDEROPPGAVER – FREMDRIFT',c.length?Math.round(c.reduce((sum,x)=>sum+x.weight*x.p,0)/c.reduce((sum,x)=>sum+x.weight,0))+' %':'–']].map(([name,value])=>'<div class="bd-stat"><small>'+name+'</small><b>'+value+'</b></div>').join('')+'</div>'+
+ '<div id="bdContent"></div>';
+ const content=q('#bdContent');
+ const overview=(rows,prefix)=>'<div class="bd-two">'+card(prefix+' – status',placeholder(prefix+'Status'))+card(prefix+' – fagfordeling',placeholder(prefix+'Fag'))+'</div>';
+ if(active==='topic'){
+  content.innerHTML=card('Alle saker – fagfordeling',placeholder('allPie'),'Hovedsaker og underoppgaver samlet')+
+    card('Alle saker – status per fag',placeholder('tagStatus'),'Antall fra begge nivåer, gruppert etter fag')+
+    overview(p,'parent')+overview(c,'child');
+  drawPie('allPie',count(selected,x=>x.fags.length?x.fags:['Uten fag']));
+  const names=[...new Set(selected.flatMap(x=>x.fags.length?x.fags:['Uten fag']))].sort(),st=['Ny','Pågår','Blokkert','Ferdig'];
+  createChart('tagStatus','bar',names,st.map((k,i)=>({label:k,data:names.map(n=>selected.filter(x=>x.status===k&&(x.fags.length?x.fags:['Uten fag']).includes(n)).length),backgroundColor:COLORS[i]})),{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}});
+  for(const [rows,name] of [[p,'parent'],[c,'child']]){drawBars(name+'Status',count(rows,x=>[x.status]));drawPie(name+'Fag',count(rows,x=>x.fags.length?x.fags:['Uten fag']))}
+ }else if(active==='vdc'){
+  content.innerHTML='<div class="bd-two">'+card('Alle saker – status',placeholder('allStatus'))+card('Alle saker – prioritet',placeholder('allPriority'))+card('Hovedsaker – status',placeholder('parentStatus'))+card('Underoppgaver – status',placeholder('childStatus'))+card('Hovedsaker – prioritet',placeholder('parentPriority'))+card('Underoppgaver – prioritet',placeholder('childPriority'))+card('Created vs Closed – hovedsaker',placeholder('parentFlow'),'Historikk krever faktiske opprettet- og lukkedatoer')+card('Created vs Closed – underoppgaver',placeholder('childFlow'),'Historikk vises bare når underoppgaver har egne livsløpsdatoer')+'</div>';
+  drawBars('allStatus',count(selected,x=>[x.status]));drawBars('allPriority',count(selected,x=>[x.priority]));
+  for(const [rows,name] of [[p,'parent'],[c,'child']]){
+   drawBars(name+'Status',count(rows,x=>[x.status]));drawBars(name+'Priority',count(rows,x=>[x.priority]));
+   const weekly=new Map();
+   for(const x of rows){for(const [d,key] of [[x.created,'created'],[x.closed,'closed']]){if(!d)continue;const w=week(d),val=weekly.get(w)||{created:0,closed:0};val[key]++;weekly.set(w,val)}}
+   const w=[...weekly].sort((a,b)=>a[0].localeCompare(b[0]));
+   createChart(name+'Flow','bar',w.map(x=>x[0]),[{label:'Opprettet',data:w.map(x=>x[1].created)},{label:'Lukket',data:w.map(x=>x[1].closed)}]);
+  }
+ }else{
+  content.innerHTML='<div class="bd-two">'+card('Alle saker – per ansvarlig',placeholder('allOwners'))+card('Alle saker – status',placeholder('ownersStatus'))+card('Hovedsaker – per ansvarlig',placeholder('parentOwners'))+card('Underoppgaver – per ansvarlig',placeholder('childOwners'))+'</div>';
+  drawBars('allOwners',count(selected,x=>[x.owner]));drawBars('ownersStatus',count(selected,x=>[x.status]));
+  drawBars('parentOwners',count(p,x=>[x.owner]));drawBars('childOwners',count(c,x=>[x.owner]));
+ }
+ const treeRows=p.flatMap(parent=>[tr(['<button class="bd-open" data-open="'+esc(parent.id)+'">'+esc(parent.title)+'</button>',esc(parent.status),esc(parent.owner),'Hovedsak']),...c.filter(x=>x.parentId===parent.id).map(x=>tr(['↳ '+esc(x.title),esc(x.status),esc(x.owner),'Underoppgave']))]);
+ const childOrphans=c.filter(x=>!p.some(parent=>parent.id===x.parentId)).map(x=>tr(['↳ '+esc(x.title)+' ('+esc(x.parentTitle)+')',esc(x.status),esc(x.owner),'Underoppgave']));
+ content.insertAdjacentHTML('beforeend',card('Hovedsaker og underoppgaver',table(['Oppgave','Status','Ansvarlig','Nivå'],[...treeRows,...childOrphans]),'Oppgaver vises i hierarki, og samlet statistikk teller begge nivåer.'));
+ content.insertAdjacentHTML('beforeend','<p class="meta bd-foot">Alle saker = hovedsaker + underoppgaver. Fag kan føre til at en sak inngår i flere faggrupper. Historikk for underoppgaver krever egne opprettelses- og lukkedatoer.</p>');
+ root.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>onOpen(el.dataset.open));
+ root.querySelectorAll('[data-bdtab]').forEach(el=>el.onclick=()=>{active=el.dataset.bdtab;render(topics,parse,onOpen,projectName)});
+ for(const [key,target] of [['from','bdFrom'],['to','bdTo'],['tag','bdTag'],['user','bdUser']])q('#'+target).onchange=e=>{filter[key]=e.target.value;render(topics,parse,onOpen,projectName)};
+ q('#bdReset').onclick=()=>{filter={from:'',to:'',tag:'',user:''};render(topics,parse,onOpen,projectName)};
+ q('#bdPrint').onclick=()=>window.print();
 }
 window.BCFTaskFlowDashboard={render};
 })();
