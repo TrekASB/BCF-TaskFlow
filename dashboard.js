@@ -1,57 +1,56 @@
-/* BCFTaskFlow leadership dashboard, read-only. Uses existing topic data and TaskFlow subtasks. */
 (()=>{'use strict';
-const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const done=s=>/^(done|closed|completed|resolved|ferdig|lukket)$/i.test(String(s||'').trim());
-const stage=s=>done(s)?'Ferdig':/^(in progress|pågår|active|under arbeid)$/i.test(String(s||'').trim())?'Pågår':'Åpen';
-const weight=t=>{const n=Number(t.weight);return Number.isFinite(n)&&n>0?n:1};
-const completion=t=>t.completion!==undefined&&[0,25,50,75,100].includes(Number(t.completion))?Number(t.completion):(done(t.status)?100:0);
-const progress=tasks=>tasks.length?Math.round(tasks.reduce((sum,t)=>sum+weight(t)*completion(t),0)/tasks.reduce((sum,t)=>sum+weight(t),0)):null;
-function getTags(t){const raw=t.labels??t.topic_labels??t.tags??[];return Array.isArray(raw)?raw.map(v=>typeof v==='string'?v:v?.name||v?.label||'').filter(Boolean):typeof raw==='string'?[raw]:[]}
-function getDate(t){const d=t.due_date||t.dueDate||null;return d?new Date(d):null}
-function summary(topics,parse){const data=topics.map(t=>{let tasks=[];try{tasks=parse(t).tasks||[]}catch{}return {topic:t,tasks,p:progress(tasks),stage:stage(t.topic_status),tags:getTags(t),priority:t.priority||'Ikke angitt',due:getDate(t)}});return data}
-function barGroup(data,labelFn){const map=new Map();data.forEach(x=>{const values=labelFn(x);for(const v of values){map.set(v,(map.get(v)||0)+1)}});return [...map].sort((a,b)=>b[1]-a[1]).slice(0,8)}
-function bars(data){const max=Math.max(1,...data.map(x=>x[1]));return data.length?data.map(([name,val])=>'<div class="db-barline"><span title="'+E(name)+'">'+E(name)+'</span><div class="db-track"><div style="width:'+val/max*100+'%"></div></div><b>'+val+'</b></div>').join(''):'<p class="meta">Ingen registrerte data.</p>'}
-
-// VDC snapshot metrics. Historical flow metrics require reliable lifecycle timestamps.
-function vdcMetrics(data){
- const open=data.filter(d=>d.stage!=='Ferdig');
- const wip=open.filter(d=>d.stage==='Pågår');
- const backlog=open.filter(d=>d.stage!=='Pågår');
- const created= data.filter(d=>Number.isFinite(new Date(d.topic.creation_date||d.topic.created_at).getTime()));
- const closed=data.filter(d=>d.stage==='Ferdig'&&Number.isFinite(new Date(d.topic.closed_date||d.topic.resolved_date).getTime()));
- const missingClosure=data.filter(d=>d.stage==='Ferdig').length-closed.length;
- const weekly=new Map();
- const weekKey=dt=>{const a=new Date(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate()));const n=a.getUTCDay()||7;a.setUTCDate(a.getUTCDate()+4-n);const y=a.getUTCFullYear();const start=new Date(Date.UTC(y,0,1));return y+'-U'+String(Math.ceil((((a-start)/86400000)+1)/7)).padStart(2,'0')};
- for(const d of created){const k=weekKey(new Date(d.topic.creation_date||d.topic.created_at));const row=weekly.get(k)||{created:0,closed:0};row.created++;weekly.set(k,row)}
- for(const d of closed){const k=weekKey(new Date(d.topic.closed_date||d.topic.resolved_date));const row=weekly.get(k)||{created:0,closed:0};row.closed++;weekly.set(k,row)}
- const weeklyRows=[...weekly].sort((a,b)=>a[0].localeCompare(b[0])).slice(-12);
- return {wip:wip.length,backlog:backlog.length,missingClosure,weeklyRows,
- aging:open.map(d=>{const dt=new Date(d.topic.creation_date||d.topic.created_at);return Number.isFinite(dt.getTime())?Math.max(0,Math.floor((Date.now()-dt.getTime())/86400000)):null}).filter(x=>x!==null),
- assignees:barGroup(data,d=>[String(d.topic.assigned_to||'Uten ansvarlig')])};
+const $=s=>document.querySelector(s), E=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const done=s=>/^(closed|done|completed|resolved|ferdig|lukket)$/i.test(String(s||''));
+const norm=s=>done(s)?'Ferdig':/^(in progress|pågår|active)$/i.test(String(s||''))?'Pågår':'Ny';
+const date=v=>{if(!v)return null;const d=new Date(v);return Number.isFinite(d.getTime())?d:null};
+const week=d=>{const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));const y=t.getUTCFullYear();const jan=new Date(Date.UTC(y,0,1));return y+'-W'+String(Math.ceil((((t-jan)/86400000)+1)/7)).padStart(2,'0')};
+const tags=t=>{const v=t.labels??t.topic_labels??t.tags??[];return Array.isArray(v)?v.map(x=>typeof x==='string'?x:(x?.name||x?.label||'')).filter(Boolean):typeof v==='string'&&v?[v]:[]};
+const assignee=t=>{const a=t.assigned_to??t.assignee??'';return typeof a==='string'?(a||'Ikke tildelt'):(a?.email||a?.name||'Ikke tildelt')};
+const weight=t=>Math.max(1,Math.min(10,Number(t.weight)||1));
+const pct=t=>[0,25,50,75,100].includes(Number(t.completion))?Number(t.completion):(done(t.status)?100:0);
+const progress=ts=>ts.length?Math.round(ts.reduce((s,t)=>s+weight(t)*pct(t),0)/ts.reduce((s,t)=>s+weight(t),0)):null;
+let active='topic',filterWeekFrom='',filterWeekTo='',filterTag='',filterAssignee='';
+function group(rows,fn){const m=new Map();rows.forEach(r=>{for(const k of fn(r))m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])}
+function bar(rows){const max=Math.max(1,...rows.map(r=>r[1]));return rows.length?rows.map(([k,v])=>'<div class="bd-bar"><span title="'+E(k)+'">'+E(k)+'</span><div class="bd-track"><div style="width:'+100*v/max+'%"></div></div><strong>'+v+'</strong></div>').join(''):'<p class="meta">Ingen data for valgt filter.</p>'}
+function chartBars(values,colors){const max=Math.max(1,...values.map(x=>x[1]));return '<div class="bd-colchart">'+values.map(([label,n],i)=>'<div class="bd-colitem"><b>'+n+'</b><div class="bd-colbox"><div style="height:'+n/max*100+'%;background:'+(colors?.[i%colors.length]||'#0c66e4')+'"></div></div><small>'+E(label)+'</small></div>').join('')+'</div>'}
+function card(title,content,hint=''){return '<section class="bd-card"><h3>'+title+'</h3>'+(hint?'<p class="meta">'+hint+'</p>':'')+content+'</section>'}
+function table(headers,rows){return '<div class="bd-overflow"><table class="bd-table"><thead><tr>'+headers.map(x=>'<th>'+E(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
+function row(cells){return '<tr>'+cells.map(x=>'<td>'+x+'</td>').join('')+'</tr>'}
+function render(topics,parse,open,project){
+const root=$('#dashboard');if(!root)return;
+const raw=topics.map(t=>{let ts=[];try{ts=parse(t).tasks||[]}catch{}return {t,ts,tag:tags(t),owner:assignee(t),st:norm(t.topic_status),pr:t.priority||'Ikke angitt',created:date(t.creation_date||t.created_at),closed:date(t.closed_date||t.resolved_date),due:date(t.due_date),p:progress(ts)}});
+const weeks=[...new Set(raw.map(r=>r.created?week(r.created):null).filter(Boolean))].sort();
+const allTags=[...new Set(raw.flatMap(r=>r.tag))].sort(),allOwners=[...new Set(raw.map(r=>r.owner))].sort();
+const opt=(items,current,all)=>'<option value="">'+all+'</option>'+items.map(x=>'<option value="'+E(x)+'" '+(x===current?'selected':'')+'>'+E(x)+'</option>').join('');
+const selected=raw.filter(r=>(!filterTag||r.tag.includes(filterTag))&&(!filterAssignee||r.owner===filterAssignee)&&(!filterWeekFrom||r.created&&week(r.created)>=filterWeekFrom)&&(!filterWeekTo||r.created&&week(r.created)<=filterWeekTo));
+const subs=selected.flatMap(r=>r.ts);const p=progress(subs);
+const kpis=[['Totale saker',selected.length],['Åpne saker',selected.filter(r=>r.st!=='Ferdig').length],['Lukkede saker',selected.filter(r=>r.st==='Ferdig').length],['Underoppgaver',subs.length],['Vektet fremdrift',p===null?'–':p+' %'],['Klare til lukking',selected.filter(r=>r.st!=='Ferdig'&&r.ts.length&&r.p===100).length]];
+root.innerHTML='<div class="bd-controls"><span class="bd-filtername">PERIODE</span><label>Fra uke <select id="bdFrom">'+opt(weeks,filterWeekFrom,'(alle)')+'</select></label><label>Til uke <select id="bdTo">'+opt(weeks,filterWeekTo,'(alle)')+'</select></label><label>FAG <select id="bdTag">'+opt(allTags,filterTag,'(alle)')+'</select></label><label>ASSIGNEE <select id="bdUser">'+opt(allOwners,filterAssignee,'(alle)')+'</select></label><button id="bdReset">Nullstill</button><button id="bdPrint">Skriv ut</button></div>'+
+'<div class="bd-tabs">'+[['topic','Topic dashboard'],['vdc','VDC dashboard'],['assignee','Assignee dashboard']].map(([id,n])=>'<button class="'+(id===active?'on':'')+'" data-bdtab="'+id+'">'+n+'</button>').join('')+'</div>'+
+'<div class="bd-heading">'+(active==='topic'?'FAG & OVERSIKT':active==='vdc'?'ANALYSE & KPI':'ASSIGNEE STATISTIKK')+' <span>'+E(project||'')+' · '+selected.length+' av '+raw.length+' saker</span></div>'+
+'<div id="bdContent"></div>';
+const statusGroups=group(selected,r=>[r.st]),tagGroups=group(selected,r=>r.tag.length?r.tag:['Uten fag/tag']);
+const openLink=r=>'<button class="bd-open" data-open="'+E(r.t.guid)+'">'+E(r.t.title||'Uten tittel')+'</button>';
+if(active==='topic'){
+ const tagStatus=tagGroups.map(([name,total])=>{const sub=selected.filter(r=>(r.tag.length?r.tag:['Uten fag/tag']).includes(name));return row([E(name),total,sub.filter(r=>r.st==='Ferdig').length,sub.filter(r=>r.st==='Pågår').length,sub.filter(r=>r.st==='Ny').length])});
+ $('#bdContent').innerHTML='<div class="bd-two">'+card('Fag (Tag) – hovedfordeling',bar(tagGroups),'Saker per fag. En sak kan ha flere fag.')+card('Fag (Tag) – detaljer per status',table(['Fag','Totalt','Ferdig','Pågår','Ny'],tagStatus),'Klikk på en fagruppe i filteret for å avgrense rapporten.')+'</div>'+card('Hovedsaker – fremdrift',table(['Sak','Fag','Ansvarlig','Status','Underoppgaver','Fremdrift'],selected.map(r=>row([openLink(r),E(r.tag.join(', ')||'–'),E(r.owner),E(r.t.topic_status),r.ts.length,r.p===null?'–':r.p+' %']))));
+}else if(active==='vdc'){
+ const w=new Map();for(const r of selected){if(r.created){const k=week(r.created),x=w.get(k)||{created:0,closed:0};x.created++;w.set(k,x)}if(r.st==='Ferdig'&&r.closed){const k=week(r.closed),x=w.get(k)||{created:0,closed:0};x.closed++;w.set(k,x)}}const allWeeks=[...w].sort((a,b)=>a[0].localeCompare(b[0]));const missing=selected.filter(r=>r.st==='Ferdig'&&!r.closed).length;
+ const age=selected.filter(r=>r.st!=='Ferdig'&&r.created).map(r=>Math.max(0,Math.floor((Date.now()-r.created)/86400000)));
+ const summaries=kpis.map(([k,v])=>'<div class="bd-stat"><small>'+E(k)+'</small><b>'+E(v)+'</b></div>').join('');
+ const createdRows=allWeeks.map(([k,v])=>row([E(k),v.created,v.closed]));
+ $('#bdContent').innerHTML='<div class="bd-stats">'+summaries+'</div><div class="bd-two">'+card('Status – hovedsaker',chartBars(statusGroups,['#579dff','#f5b800','#22a06b']))+card('Priority – hovedsaker',bar(group(selected,r=>[r.pr])))+card('Created vs Closed – per uke',table(['Uke','Opprettet','Lukket'],createdRows),missing?missing+' lukkede saker mangler sikker lukkedato.':'Basert på opprettetdato og faktisk lukkedato.')+card('WIP og Backlog',bar([['WIP – pågår',selected.filter(r=>r.st==='Pågår').length],['Backlog – ny/åpen',selected.filter(r=>r.st==='Ny').length]]),'Nåværende status, ikke historisk WIP. Gjennomsnittlig alder åpne: '+(age.length?Math.round(age.reduce((a,b)=>a+b,0)/age.length)+' dager':'Ukjent'))+'</div>';
+}else{
+ const owners=group(selected,r=>[r.owner]);
+ const matrix=owners.map(([name,n])=>{const list=selected.filter(r=>r.owner===name);return row([E(name),n,list.filter(r=>r.st==='Ny').length,list.filter(r=>r.st==='Pågår').length,list.filter(r=>r.st==='Ferdig').length])});
+ const dates=group(selected.filter(r=>r.created),r=>[week(r.created)]);
+ $('#bdContent').innerHTML='<div class="bd-two">'+card('Saker per Assignee',bar(owners),'Arbeidsmengde per ansvarlig')+card('Assignee: Status-fordeling',table(['Ansvarlig','Totalt','Ny','Pågår','Ferdig'],matrix))+card('Assignee: Saker over tid',bar(dates),'Opprettede saker per uke for valgt bruker/fag')+card('Gjennomsnittlig cycle time', '<p class="meta">Beregnes ikke uten pålitelige datoer for både opprettelse og lukking. Ingen estimater fra siste endringsdato.</p>')+'</div>'+card('Ansvarlig – detaljert oversikt',table(['Sak','Status','Fag','Prioritet','Fremdrift'],selected.map(r=>row([openLink(r),E(r.t.topic_status),E(r.tag.join(', ')||'–'),E(r.pr),r.p===null?'–':r.p+' %']))));
 }
-function render(topics,parse,onOpen,projectName){
- const root=document.getElementById('dashboard');if(!root)return;
- const data=summary(topics,parse),vdc=vdcMetrics(data),all=data.flatMap(d=>d.tasks),withTasks=data.filter(d=>d.tasks.length);
- const totalW=all.reduce((s,t)=>s+weight(t),0),wPct=totalW?Math.round(all.reduce((s,t)=>s+weight(t)*completion(t),0)/totalW):null;
- const completed=all.filter(t=>completion(t)===100).length,blocked=data.filter(d=>d.stage!=='Ferdig'&&d.p===100&&d.tasks.length);
- const now=new Date();now.setHours(0,0,0,0);
- const overdue=data.filter(d=>d.stage!=='Ferdig'&&d.due&&Number.isFinite(d.due.getTime())&&d.due<now);
- const waiting=all.filter(t=>completion(t)===0).length;
- const high=data.filter(d=>/high|critical|høy|kritisk|urgent|haster/i.test(String(d.priority))&&d.stage!=='Ferdig');
- const countStatus=barGroup(data,d=>[d.stage]);const countPriority=barGroup(data,d=>[String(d.priority)]);
- const countTags=barGroup(data,d=>d.tags.length?d.tags:['Uten fag/tag']);
- const focus=data.filter(d=>d.stage!=='Ferdig').sort((a,b)=>{const sa=(overdue.includes(a)?100:0)+(a.p===100?60:0)+(/high|critical|høy|kritisk/i.test(String(a.priority))?30:0);const sb=(overdue.includes(b)?100:0)+(b.p===100?60:0)+(/high|critical|høy|kritisk/i.test(String(b.priority))?30:0);return sb-sa}).slice(0,10);
- root.innerHTML='<div class="db-intro"><div><div class="section-kicker">LEDELSESOVERSIKT</div><h2>Prosjektstatus og leveranser</h2><p class="meta">'+E(projectName||'Trimble Connect')+' · Oppdatert fra tilgjengelige BCF Topics · '+new Date().toLocaleString('nb-NO')+'</p></div><button id="dbPrint">Skriv ut / PDF</button></div>'+
- '<div class="db-kpis">'+[
- ['Hovedsaker',data.length,'BCF Topics'],['Åpne hovedsaker',data.filter(d=>d.stage!=='Ferdig').length,'Ikke lukket'],['Underoppgaver',all.length,completed+' ferdige · '+waiting+' ikke påbegynt'],['Vektet fremdrift',wPct===null?'–':wPct+' %',wPct===null?'Ingen deloppgaver':'Basert på vekt × ferdigstillelse'],['Klar til lukking',blocked.length,'100 % deloppgaver, åpen hovedsak'],['Forfalte hovedsaker',overdue.length,'Kun saker med gyldig frist'],['WIP',vdc.wip,'Pågående hovedsaker'],['Backlog',vdc.backlog,'Åpne, ikke pågående hovedsaker'],['Gj.sn. alder åpne',vdc.aging.length?Math.round(vdc.aging.reduce((a,b)=>a+b,0)/vdc.aging.length)+' d':'–','Fra opprettelsesdato']
- ].map(([name,v,desc])=>'<div class="db-kpi"><span>'+E(name)+'</span><strong>'+E(v)+'</strong><small>'+E(desc)+'</small></div>').join('')+'</div>'+
- '<div class="db-panels"><section class="panel db-panel"><h3>Status på hovedsaker</h3>'+bars(countStatus)+'</section><section class="panel db-panel"><h3>Prioritetsfordeling</h3>'+bars(countPriority)+'</section><section class="panel db-panel"><h3>Fordeling per fag/tag</h3>'+bars(countTags)+'</section><section class="panel db-panel"><h3>Ferdigstillelse</h3><div class="db-big">'+(wPct===null?'–':wPct+' %')+'</div><div class="db-track db-large"><div style="width:'+(wPct||0)+'%"></div></div><p class="meta">Vektet fullføringsgrad for alle underoppgaver. '+withTasks.length+' av '+data.length+' hovedsaker har underoppgaver.</p><p class="meta">Åpen BCF-hovedsak lukkes fortsatt manuelt.</p></section></div>'+
- '<section class="panel db-panel"><h3>VDC – flyt og leveranseevne</h3><div class="db-panels"><div><h3>Created vs Closed · per uke</h3><p class="meta">Opprettetdato og faktisk lukketdato brukes. Lukkede saker uten sluttdato holdes utenfor tidsserien.</p><div class="db-tablewrap"><table class="db-table"><thead><tr><th>Uke</th><th>Opprettet</th><th>Lukket</th></tr></thead><tbody>'+ (vdc.weeklyRows.length?vdc.weeklyRows.map(([week,row])=>'<tr><td>'+E(week)+'</td><td>'+row.created+'</td><td>'+row.closed+'</td></tr>').join(''):'<tr><td colspan="3">Ingen daterte hendelser</td></tr>')+'</tbody></table></div></div><div><h3>Ansvar og arbeidsmengde</h3>'+bars(vdc.assignees)+'<p class="meta">Saker per ansvarlig, basert på BCF assigned_to.</p></div></div><p class="meta">'+(vdc.missingClosure?'OBS: '+vdc.missingClosure+' lukkede saker mangler verifiserbar lukketdato. Historisk WIP, cycle time og gjennomstrømning beregnes derfor ikke.':'Historisk WIP og cycle time krever fullstendige livsløpsdata; disse er ikke inkludert i denne versjonen.')+'</p></section>'+ 
- '<section class="panel db-panel"><div class="db-section-header"><h3>Oppfølging – hovedsaker som krever oppmerksomhet</h3><span class="meta">'+focus.length+' vist av '+data.filter(d=>d.stage!=='Ferdig').length+' åpne</span></div><div class="db-tablewrap"><table class="db-table"><thead><tr><th>Sak</th><th>Status</th><th>Prioritet</th><th>Fag</th><th>Underoppgaver</th><th>Fremdrift</th><th>Oppfølging</th></tr></thead><tbody>'+
- (focus.length?focus.map(d=>{const reason=overdue.includes(d)?'Forfalt':d.p===100&&d.tasks.length?'Klar til lukking':high.includes(d)?'Høy prioritet':'Pågår / åpen';return '<tr><td><button class="db-link" data-open="'+E(d.topic.guid)+'">'+E(d.topic.title||'Uten tittel')+'</button></td><td>'+E(d.topic.topic_status||'–')+'</td><td>'+E(d.priority)+'</td><td>'+E(d.tags.join(', ')||'–')+'</td><td>'+d.tasks.length+'</td><td>'+(d.p===null?'–':d.p+' %')+'</td><td>'+E(reason)+'</td></tr>'}).join(''):'<tr><td colspan="7">Ingen åpne saker.</td></tr>')+'</tbody></table></div></section>'+
- '<p class="meta db-foot">Tallene er et øyeblikksbilde av tilgjengelige BCF Topics. Underoppgaver telles ikke som egne hovedsaker. «Forfalt» krever fristfelt i API-responsen. Historiske trender og opprettet-vs-lukket vises ikke uten pålitelige historikkdata.</p>';
- root.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>onOpen(el.dataset.open)));
- root.querySelector('#dbPrint')?.addEventListener('click',()=>window.print());
+root.querySelectorAll('[data-bdtab]').forEach(el=>el.onclick=()=>{active=el.dataset.bdtab;render(topics,parse,open,project)});
+root.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>open(el.dataset.open));
+for(const [sel,set] of [['#bdFrom',v=>filterWeekFrom=v],['#bdTo',v=>filterWeekTo=v],['#bdTag',v=>filterTag=v],['#bdUser',v=>filterAssignee=v]])$(sel).onchange=e=>{set(e.target.value);render(topics,parse,open,project)};
+$('#bdReset').onclick=()=>{filterWeekFrom='';filterWeekTo='';filterTag='';filterAssignee='';render(topics,parse,open,project)};
+$('#bdPrint').onclick=()=>window.print();
 }
 window.BCFTaskFlowDashboard={render};
 })();
