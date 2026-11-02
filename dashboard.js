@@ -46,7 +46,13 @@ if(active==='topic'){
  const dates=group(selected.filter(r=>r.created),r=>[week(r.created)]);
  $('#bdContent').innerHTML='<div class="bd-two">'+card('Saker per Assignee',bar(owners),'Arbeidsmengde per ansvarlig')+card('Assignee: Status-fordeling',table(['Ansvarlig','Totalt','Ny','Pågår','Ferdig'],matrix))+card('Assignee: Saker over tid',bar(dates),'Opprettede saker per uke for valgt bruker/fag')+card('Gjennomsnittlig cycle time', '<p class="meta">Beregnes ikke uten pålitelige datoer for både opprettelse og lukking. Ingen estimater fra siste endringsdato.</p>')+'</div>'+card('Ansvarlig – detaljert oversikt',table(['Sak','Status','Fag','Prioritet','Fremdrift'],selected.map(r=>row([openLink(r),E(r.t.topic_status),E(r.tag.join(', ')||'–'),E(r.pr),r.p===null?'–':r.p+' %']))));
 }
-root.querySelectorAll('[data-bdtab]').forEach(el=>el.onclick=()=>{active=el.dataset.bdtab;render(topics,parse,open,project)});
+// Jira-inspired parent/subtask overview. Parent issues count once; child progress remains separate.
+ const treeRows=selected.flatMap(r=>[
+  row(['<strong>▣ '+openLink(r)+'</strong>',E(r.t.topic_status||'–'),E(r.owner),r.p===null?'–':r.p+' %','Hovedsak']),
+  ...r.ts.map(t=>row(['<span class="bd-childrow">↳ '+E(t.title||'Uten tittel')+'</span>',E(t.blocked?'Blokkert':t.status||'Ny'),E(t.assignee||'Ikke tildelt'),E(t.completion??(t.status==='Done'?100:0))+' %','Underoppgave']))
+ ]);
+ $('#bdContent').insertAdjacentHTML('beforeend',card('Hovedoppgaver og tilhørende underoppgaver',table(['Sak / underoppgave','Status','Ansvarlig','Ferdigstillelse','Nivå'],treeRows),'Hierarkisk oversikt. Hovedsaker og underoppgaver rapporteres på separate nivåer for å unngå dobbeltelling.'));
+ root.querySelectorAll('[data-bdtab]').forEach(el=>el.onclick=()=>{active=el.dataset.bdtab;render(topics,parse,open,project)});
 root.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>open(el.dataset.open));
 for(const [sel,set] of [['#bdFrom',v=>filterWeekFrom=v],['#bdTo',v=>filterWeekTo=v],['#bdTag',v=>filterTag=v],['#bdUser',v=>filterAssignee=v]])$(sel).onchange=e=>{set(e.target.value);render(topics,parse,open,project)};
 $('#bdReset').onclick=()=>{filterWeekFrom='';filterWeekTo='';filterTag='';filterAssignee='';render(topics,parse,open,project)};
