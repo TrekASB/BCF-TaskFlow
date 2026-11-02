@@ -35,3 +35,8 @@ Velges i nedtrekksmeny, ikke ved fritekst. 1–2: enkel/rask; 3–4: avgrenset; 
 
 ## Ferdigstillelsesgrad (v0.4.0)
 Hver underoppgave har en nedtrekksmeny med 0 %, 25 %, 50 %, 75 % og 100 %. 0 % er ikke påbegynt, og 100 % er ferdigstilt. Samlet fremdrift beregnes som `sum(vekt * ferdigstillelsesgrad) / sum(vekter)`; resultatet vises som prosent. Status blir automatisk Ny ved 0 %, Pågår ved 25–75 % og Ferdig ved 100 %. Dersom en eksisterende oppgave mangler ferdigstillelsesgrad, tolkes status Ferdig som 100 % og øvrige statuser som 0 %.
+
+## Dashboard for prosjektledelse
+Egen **Dashboard**-fane viser prosjekttall uten å endre BCF-data: antall hovedsaker, åpne saker, underoppgaver, fullførte underoppgaver, samlet vektet fremdrift, saker som har 100 % deloppgaver men fortsatt er åpne, og forfalte hovedsaker dersom fristfelt er tilgjengelig. I tillegg vises statusfordeling, prioritetsfordeling, fag/tag og liste over saker som trenger oppfølging. Klikk på en sak i oppfølgingslisten for å åpne hovedsaken under «Oppgaver». «Skriv ut / PDF» bruker nettleserens utskriftsdialog.
+
+**Datadefinisjoner:** Hovedsak = én BCF Topic; underoppgave = oppgave innebygd i BCFTaskFlow-JSON i beskrivelsen (ikke eget BCF Topic). Fremdrift beregnes ved vekt × ferdigstillelsesgrad, aggregert på alle registrerte underoppgaver. Status og prioritet kommer direkte fra BCF API. Forfalt krever gyldig `due_date` i API-responsen. Oversikten er et øyeblikksbilde, ikke en historisk tidsserie. Vi viser derfor ikke konstruerte «opprettet mot lukket»-trender eller frister som mangler. Dashboardet er lesbart, mens endringer skjer i Oppgaver-fanen.
