@@ -1,15 +1,16 @@
 {
   "app": "BCFTaskFlow",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "apiBase": "https://open21.connect.trimble.com/bcf/3.0/projects",
-  "childMarker": "BCFTaskFlow parent:",
+  "storage": "parent-topic-description",
+  "schemaVersion": 2,
   "completedStatuses": [
-    "closed",
     "done",
+    "closed",
     "completed",
     "resolved",
     "ferdig"
   ],
-  "demoOnLaunch": false,
-  "notes": "Prosjekt og OAuth token hentes fra Trimble Workspace API. Endepunkter og tilgang må testes i prosjekt."
+  "maxSubtasks": 100,
+  "notes": "Underoppgaver lagres i et merket JSON-blokk på hovedsakens description. Ingen separate BCF Topics blir opprettet."
 }
