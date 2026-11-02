@@ -16,15 +16,16 @@ header{height:64px;background:#fff;border-bottom:1px solid var(--border);padding
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 header .brand-logo{height:auto;max-height:40px;width:148px;object-fit:contain;flex-shrink:0}header .brand-copy{min-width:0}header .org{font-size:12px;font-weight:600;color:#172b4d;margin-top:2px}header .dev{font-size:11px;color:#44546f;line-height:1.35;overflow-wrap:anywhere}@media(max-width:650px){header{height:auto;min-height:72px;padding:10px 14px;gap:10px}header .brand-logo{width:108px}header .brand-copy strong{font-size:16px}header .dev{font-size:10px}}.view-tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:1px solid var(--border);padding-bottom:8px}.view-tabs button{border-color:transparent;background:transparent;border-radius:4px}.view-tabs button.active{background:#e9f2ff;color:#0055cc;border-color:#cce0ff}.db-intro,.db-section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.db-intro h2{font-size:22px;margin:4px 0}.db-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}.db-kpi{background:#fff;border:1px solid var(--border);border-radius:6px;padding:17px}.db-kpi span,.db-kpi small{display:block;color:var(--muted);font-size:12px}.db-kpi strong{display:block;font-size:29px;margin:8px 0}.db-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}.db-panel{padding:18px;margin-bottom:14px}.db-panel h3{margin-bottom:16px}.db-barline{display:grid;grid-template-columns:minmax(95px,135px) 1fr 30px;gap:12px;align-items:center;margin:11px 0;font-size:12px}.db-track{height:10px;border-radius:8px;background:#edf1f5;overflow:hidden}.db-track>div{height:100%;background:#0c66e4;border-radius:8px}.db-big{font-size:36px;font-weight:700;margin:20px 0 10px}.db-large{height:14px;margin-bottom:18px}.db-tablewrap{overflow:auto}.db-table{border-collapse:collapse;width:100%;font-size:12px}.db-table th,.db-table td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--border)}.db-table th{background:#fafbfc;color:var(--muted)}.db-link{border:0;background:none;color:#0c66e4;font-weight:600;padding:0;min-height:0;text-align:left}.db-foot{line-height:1.6}@media(max-width:900px){.db-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.db-kpis,.db-panels{grid-template-columns:1fr}}@media print{header,.breadcrumb,.page-heading,.view-tabs,.db-intro button,.footer-note,#notice{display:none!important}#dashboard{display:block!important}.db-panel,.db-kpi{break-inside:avoid}main{padding:0}}
 .bd-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid var(--border);background:#fff}.bd-controls label{display:flex;align-items:center;gap:5px;font-size:11px;color:#44546f}.bd-controls select{max-width:180px;font-size:12px;min-height:30px;padding:5px}.bd-filtername,.bd-heading{font-size:11px;letter-spacing:.6px;font-weight:700;color:#626f86}.bd-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px}.bd-tabs button{border:none;border-radius:0;background:transparent;font-size:12px;min-height:40px;padding:10px 16px}.bd-tabs button.on{color:var(--blue);border-bottom:2px solid var(--blue)}.bd-heading{margin:20px 0 12px}.bd-heading span{float:right;letter-spacing:0;font-weight:400}.bd-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.bd-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:15px;min-width:0}.bd-card h3{margin-bottom:8px}.bd-bar{display:grid;grid-template-columns:minmax(105px,1fr) 2fr 30px;gap:10px;align-items:center;margin:12px 0;font-size:12px}.bd-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bd-track{background:#ecf0f5;border-radius:5px;height:12px;overflow:hidden}.bd-track>div{background:#0c66e4;height:100%;border-radius:4px}.bd-overflow{overflow-x:auto}.bd-table{width:100%;border-collapse:collapse;font-size:12px}.bd-table th,.bd-table td{border-bottom:1px solid var(--border);padding:10px 8px;text-align:left}.bd-table th{background:#f7f8fa;color:#44546f}.bd-open{border:none;background:transparent;color:#0c66e4;text-align:left;padding:0;font-weight:600;min-height:0}.bd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:15px}.bd-stat{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px}.bd-stat small{font-size:11px;display:block;color:var(--muted)}.bd-stat b{display:block;font-size:25px;margin-top:6px}.bd-colchart{display:flex;gap:14px;height:210px;align-items:end;padding-top:25px}.bd-colitem{display:flex;flex:1;align-items:center;flex-direction:column;height:100%;gap:5px;min-width:0}.bd-colbox{width:75%;height:145px;display:flex;align-items:end;background:#f7f8fa}.bd-colbox>div{width:100%;min-height:1px}.bd-colitem small{font-size:10px;text-align:center;overflow-wrap:anywhere}@media(max-width:850px){.bd-two{grid-template-columns:1fr}.bd-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.bd-stats{grid-template-columns:1fr}.bd-controls label{width:100%}}
+#mainDlg{border:1px solid var(--border);border-radius:8px;width:min(520px,95vw);padding:22px;box-shadow:0 20px 60px #172b4d44}#mainDlg::backdrop{background:#172b4d77}#mainForm{display:grid;gap:12px}#mainForm label{display:grid;gap:5px;font-size:12px;font-weight:600}#mainForm input,#mainForm select,#mainForm textarea{width:100%;padding:9px;border:1px solid var(--border);border-radius:4px;font:inherit}
 </style>
 </head>
 <body>
 <header><img class="brand-logo" src="./norconsult-logo-black.png" alt="Norconsult"><div class="brand-copy"><strong>BCF TaskFlow</strong><div class="org">Norconsult Norge</div><div class="dev">Developed by Norconsult, (AI-assisted development). Kontaktperson: Edin.Dzakmic@norconsult.com.</div></div><div class="header-label">Trimble Connect Extension</div></header>
 <main>
 <nav class="breadcrumb" aria-label="Brødsmulesti"><span>Trimble Connect</span><span aria-hidden="true">/</span><span>BCF Topics</span><span aria-hidden="true">/</span><span>Oppgaver</span></nav>
-<div class="page-heading"><div><h1>Oppgaver</h1><p>Oversikt over hovedoppgaver, underoppgaver og fremdrift.</p></div><div class="row toolbar"><span class="tag" id="project">Ikke tilkoblet</span><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div></div>
+<div class="page-heading"><div><h1>Oppgaver</h1><p>Oversikt over hovedoppgaver, underoppgaver og fremdrift.</p></div><div class="row toolbar"><span class="tag" id="project">Ikke tilkoblet</span><button id="newMain" class="primary" disabled>+ Ny hovedsak</button><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div></div>
 <div class="view-tabs" role="tablist" aria-label="Visning"><button id="tabTasks" class="active" role="tab" aria-selected="true" type="button">Oppgaver</button><button id="tabDashboard" role="tab" aria-selected="false" type="button">Dashboard</button></div>
-<div id="notice" role="status" aria-live="polite">Kobler til Trimble Connect …</div>
+<dialog id="mainDlg"><form id="mainForm"><h2>Opprett hovedsak i BCF Topics</h2><label>Tittel *<input name="title" required maxlength="200"></label><label>Beskrivelse<textarea name="description" rows="3"></textarea></label><label>Status<select name="topic_status" id="mainStatus" required></select></label><label>Type<select name="topic_type" id="mainType" required></select></label><label>Prioritet<select name="priority" id="mainPriority" required></select></label><label>Fag (tag)<select name="label" id="mainTag"></select></label><div class="row"><button type="button" id="mainCancel">Avbryt</button><button class="primary" type="submit" id="mainSave">Opprett BCF Topic</button></div></form></dialog><div id="notice" role="status" aria-live="polite">Kobler til Trimble Connect …</div>
 <div id="tasksView"><div class="grid"><section class="panel list-panel" aria-labelledby="parents-heading"><div class="list-header"><h2 id="parents-heading">Hovedoppgaver <span class="section-kicker">BCF TOPICS</span></h2><div class="search-wrap"><input id="search" aria-label="Søk i hovedoppgaver" placeholder="Søk i BCF Topics …" type="search"></div></div><div id="parents"></div><div class="list-footer">Velg en hovedoppgave for å se underoppgaver.</div></section><section class="panel" id="details" aria-label="Oppgavedetaljer"><div class="empty-state initial-empty"><div class="empty-icon" aria-hidden="true">✓</div><strong>Velg en hovedoppgave</strong><p>Detaljer og underoppgaver vises her.</p></div></section></div></div><div id="dashboard" role="tabpanel" aria-label="Dashboard" hidden></div>
 <p class="footer-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor"/><path d="M8 7v4M8 4.5v1" stroke="currentColor" stroke-width="1.5"/></svg><span>Underoppgaver lagres som metadata i hovedsakens BCF-beskrivelse, og opprettes ikke som egne BCF Topics. Oppdateringer lagres i prosjektet.</span></p>
 </main>
@@ -34,7 +35,7 @@ header .brand-logo{height:auto;max-height:40px;width:148px;object-fit:contain;fl
 const $=id=>document.getElementById(id);
 const START='[BCFTaskFlow:v2]';const END='[/BCFTaskFlow:v2]';
 let cfg={apiBase:'https://open21.connect.trimble.com/bcf/3.0/projects',completedStatuses:['done','closed','completed','resolved','ferdig']};
-let api,token,project,topics=[],selected='',mode='connecting',busy=false,topicStatuses=[],activeView='tasks';
+let api,token,project,topics=[],selected='',mode='connecting',busy=false,topicStatuses=[],topicTypes=[],topicPriorities=[],topicLabels=[],activeView='tasks';
 const escapeHtml=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const id=t=>String(t?.guid||'');
 const status=t=>String(t?.topic_status||'–');
@@ -77,12 +78,12 @@ async function req(method,path,body){
  return r.status===204?null:r.json();
 }
 function controls(){
- $('refresh').disabled=busy||mode!=='live';
+ $('refresh').disabled=busy||mode!=='live';$('newMain').disabled=busy||mode!=='live';
  // UI state only: re-enable the add button after the details panel is re-rendered.
  const addButton=$('add')?.querySelector('button[type="submit"]');
  if(addButton)addButton.disabled=busy;
 }
-async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];const ext=await req('GET','/extensions').catch(()=>null);topicStatuses=Array.isArray(ext?.topic_status)?ext.topic_status.filter(v=>typeof v==='string'&&v):[];if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
+async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];const ext=await req('GET','/extensions').catch(()=>null);topicStatuses=Array.isArray(ext?.topic_status)?ext.topic_status.filter(v=>typeof v==='string'&&v):[];topicTypes=Array.isArray(ext?.topic_type)?ext.topic_type:[];topicPriorities=Array.isArray(ext?.priority)?ext.priority:[];topicLabels=Array.isArray(ext?.topic_label)?ext.topic_label:[];if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
 // Presentation only: all API, storage, validation and mutation logic is unchanged.
 const statusTone=s=>cfg.completedStatuses.includes(String(s).toLowerCase())?'done':['in progress','pågår','active'].includes(String(s).toLowerCase())?'active':'new';
 function render(){
@@ -121,6 +122,33 @@ function switchView(view){
  $('tabDashboard').setAttribute('aria-selected',String(view==='dashboard'));
  if(view==='dashboard'&&window.BCFTaskFlowDashboard)window.BCFTaskFlowDashboard.render(topics,getRecord,openFromDashboard,project?.name);
 }
+function selectOptions(el,values,optional=false){
+ el.innerHTML='';const options=[...new Set(values.filter(x=>typeof x==='string'&&x.trim()))];
+ if(optional)el.add(new Option('(ingen)',''));
+ if(!options.length&&!optional){el.add(new Option('Ingen gyldige verdier',''));el.disabled=true;return}
+ el.disabled=false;options.forEach(v=>el.add(new Option(v,v)));
+}
+function openMainDialog(){
+ selectOptions($('mainStatus'),[...topicStatuses,...topics.map(t=>t.topic_status)]);
+ selectOptions($('mainType'),[...topicTypes,...topics.map(t=>t.topic_type)]);
+ selectOptions($('mainPriority'),[...topicPriorities,...topics.map(t=>t.priority)]);
+ selectOptions($('mainTag'),[...topicLabels,...topics.flatMap(t=>Array.isArray(t.labels)?t.labels:[])],true);
+ $('mainForm').reset();$('mainDlg').showModal();
+}
+async function createMain(e){
+ e.preventDefault();if(busy||mode!=='live')return;
+ const fd=new FormData($('mainForm'));const title=String(fd.get('title')||'').trim();
+ const payload={title,description:String(fd.get('description')||''),topic_status:String(fd.get('topic_status')||''),topic_type:String(fd.get('topic_type')||''),priority:String(fd.get('priority')||'')};
+ if(!title||!payload.topic_status||!payload.topic_type||!payload.priority){notify('Status, type og prioritet må være gyldige prosjektverdier.',true);return}
+ const tag=String(fd.get('label')||'');if(tag)payload.labels=[tag];
+ busy=true;controls();$('mainSave').disabled=true;
+ try{
+  const created=await req('POST','/topics',payload);
+  $('mainDlg').close();if(created?.guid)selected=created.guid;
+  await load();notify('Hovedsaken «'+title+'» er opprettet i BCF Topics.');
+ }catch(err){notify('Opprettelse av hovedsak feilet: '+err.message,true)}
+ finally{busy=false;controls();$('mainSave').disabled=false}
+}
 async function changeParentStatus(nextStatus){
  if(busy||mode!=='live')return;
  const currentId=selected;
@@ -151,7 +179,7 @@ async function mutate(fn){
  }catch(e){notify('Lagring feilet: '+e.message,true);render()}finally{busy=false;controls()}
 }
 async function connect(){try{const c=await fetch('./config.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(c)cfg={...cfg,...c};if(!window.TrimbleConnectWorkspace||window.parent===window)throw Error('Åpne extensionen i Trimble Connect.');api=await TrimbleConnectWorkspace.connect(window.parent,(event,args)=>{if(event==='extension.accessToken'){const x=tokenOf(args);if(x){token=x;if(tokenEventResolve)tokenEventResolve(x)}}});project=await api.project.getCurrentProject();if(api.ui?.setMenu){try{await api.ui.setMenu({title:'BCF TaskFlow',icon:'https://trekasb.github.io/BCF-TaskFlow/icon.svg',command:'bcftaskflow',subMenus:[{title:'Oppgaver og Dashboard',icon:'https://trekasb.github.io/BCF-TaskFlow/icon.svg',command:'bcftaskflow_open'}]});}catch(e){console.warn('Prosjektmeny ikke tilgjengelig i denne visningen',e)}}token=await freshToken();mode='live';await load()}catch(e){mode='offline';notify(e.message,true);controls()}}
-$('tabTasks').onclick=()=>switchView('tasks');$('tabDashboard').onclick=()=>switchView('dashboard');$('search').oninput=render;$('refresh').onclick=load;connect();
+$('newMain').onclick=openMainDialog;$('mainCancel').onclick=()=>$('mainDlg').close();$('mainForm').onsubmit=createMain;$('tabTasks').onclick=()=>switchView('tasks');$('tabDashboard').onclick=()=>switchView('dashboard');$('search').oninput=render;$('refresh').onclick=load;connect();
 })();
 </script>
 </body>
