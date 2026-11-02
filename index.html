@@ -61,7 +61,7 @@ async function load(){
  topics=Array.isArray(data)?data:Array.isArray(data?.topics)?data.topics:[];
  selected=topics.some(t=>guid(t)===selected)?selected:guid(roots()[0]);
  const statuses=await request('GET','/extensions').catch(()=>null);
- serverStatuses=Array.isArray(statuses?.topic_status)?statuses.topic_status:[];
+ serverStatuses=Array.isArray(statuses?.topic_status)?statuses.topic_status.filter(s=>typeof s==='string'&&s.trim()):[];
  notice('Tilkoblet. '+topics.length+' BCF Topics hentet.');render();
  }catch(e){notice('Kunne ikke hente BCF Topics: '+e.message,true)}
  finally{busy=false;setControls()}
@@ -84,7 +84,7 @@ function render(){
  const parent=topics.find(t=>guid(t)===selected);
  if(!parent){$('details').innerHTML='<div class="empty">Velg en hovedoppgave til venstre.</div>';return}
  const cs=children(selected),p=progress(cs),done=cs.filter(completed).length;
- const opts=Array.from(new Set([...serverStatuses,...topics.map(status),'Open','In Progress','Closed'].filter(Boolean)));
+ const opts=Array.from(new Set([...(mode==='demo'?serverStatuses:serverStatuses.length?serverStatuses:topics.map(status)),...cs.map(status)].filter(Boolean)));
  $('details').innerHTML='<div class="line"><h2 style="flex:1">'+esc(title(parent))+'</h2><span class="tag">'+esc(status(parent))+'</span></div>'+
  '<p class="meta">BCF GUID: '+esc(guid(parent))+'</p><p><b>Samlet fremdrift: '+(p===null?'Ingen fremdriftsdata':p+' %')+'</b> · '+done+' av '+cs.length+' ferdige</p>'+
  '<div class="bar"><div style="width:'+(p||0)+'%"></div></div><h3 style="margin-top:18px">Underoppgaver</h3>'+
@@ -106,7 +106,9 @@ async function addTask(name){
  busy=true;setControls();notice('Oppretter BCF Topic …');
  let newGuid=null;
  try{
- const result=await request('POST','/topics',{title:name,description:marker(selected)+'\nOpprettet av BCFTaskFlow.',topic_status:'Open'});
+ const createStatus=serverStatuses.find(s=>/^(open|new|åpen|ny)$/i.test(s))||serverStatuses.find(s=>/^(in progress|pågår)$/i.test(s))||serverStatuses[0]||status(topics.find(t=>guid(t)===selected));
+ if(!createStatus)throw Error('Kunne ikke finne en gyldig status i prosjektet.');
+ const result=await request('POST','/topics',{title:name,description:marker(selected)+'\nOpprettet av BCFTaskFlow.',topic_status:createStatus});
  newGuid=result?.guid;
  if(!newGuid)throw Error('API-et returnerte ingen GUID. Kontroller BCF-sakene før nytt forsøk.');
  let warning='';
