@@ -1,4 +1,4 @@
-# BCF TaskFlow — Trimble Connect extension (v0.3.0)
+# BCF TaskFlow — Trimble Connect extension (v0.4.0)
 
 ## Oppsett
 GitHub Pages: `main / root`. Manifest: https://trekasb.github.io/BCF-TaskFlow/manifest.json
@@ -30,5 +30,8 @@ GitHub Pages: `main / root`. Manifest: https://trekasb.github.io/BCF-TaskFlow/ma
 
 Norconsult Norge · AI-assistert utvikling.
 
-## Vekting 1–10 (v0.3.0)
+## Vekting 1–10 (v0.4.0)
 Velges i nedtrekksmeny, ikke ved fritekst. 1–2: enkel/rask; 3–4: avgrenset; 5–6: moderat; 7–8: krevende; 9–10: omfattende, tverrfaglig og langvarig. Vekting er relative kompleksitetspoeng, ikke tidsbruk. Fremdrift er sum vekter på ferdige oppgaver delt på sum alle vekter. Nye underoppgaver får som standard vekt 3. Tidligere data med vekt over 10 må endres manuelt til ny skala; eksisterende verdier blir ikke automatisk omskrevet.
+
+## Ferdigstillelsesgrad (v0.4.0)
+Hver underoppgave har en nedtrekksmeny med 0 %, 25 %, 50 %, 75 % og 100 %. 0 % er ikke påbegynt, og 100 % er ferdigstilt. Samlet fremdrift beregnes som `sum(vekt * ferdigstillelsesgrad) / sum(vekter)`; resultatet vises som prosent. Status blir automatisk Ny ved 0 %, Pågår ved 25–75 % og Ferdig ved 100 %. Dersom en eksisterende oppgave mangler ferdigstillelsesgrad, tolkes status Ferdig som 100 % og øvrige statuser som 0 %.
