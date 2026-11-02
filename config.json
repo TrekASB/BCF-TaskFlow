@@ -15,9 +15,8 @@
   "notes": "Underoppgaver lagres i et merket JSON-blokk på hovedsakens description. Ingen separate BCF Topics blir opprettet.",
   "weightScale": {
     "min": 1,
-    "max": 10,
-    "default": 3,
-    "method": "relative effort and complexity"
+    "max": 5,
+    "default": 3
   },
   "completionOptions": [
     0,
