@@ -52,3 +52,6 @@ Kanban har fire fargekodede kolonner: Ny (grå), Pågår (blå), Blokkert (orans
 
 ## Underoppgavefelt og vekting 1–5
 Opprettelse i Oppgaver-fanen har nå tittel, vekting (nedtrekk 1–5), ansvarlig, tidsfrist og fag. Disse lagres som TaskFlow-metadata på hovedsakens BCF Topic. Kanban-redigering viser og kan endre samme felter. Skalaen er 1 enkel, 2 avgrenset, 3 moderat, 4 krevende og 5 svært krevende/tverrfaglig. Tidligere lagrede vekter over 5 konverteres ikke automatisk; revider dem manuelt ved behov. Ingen endring i BCF hovedsakenes egne fag- eller ansvarsfelt.
+
+## Team og fagvalg
+Oppgaver: «Ansvarlig» søker i prosjektmedlemmer via Workspace API `project.getMembers()` (navn/e-post); «Fag» foreslår tagger fra BCF API `GET /extensions` (`topic_label`) og eksisterende hovedsakers labels. Kanban-redigering bruker samme kilder. Verdier lagres som underoppgave-metadata i BCF-hovedsakens beskrivelse. Native HTML datalist gir søkeforslag, men er ikke en fullverdig katalog-widget. Dersom API-et ikke leverer Team eller tagger, vil feltet være tomt for forslag; sjekk konsollen/rettigheter. Underoppgavetildeling oppdaterer ikke automatisk BCF-hovedsakens `assigned_to`.
