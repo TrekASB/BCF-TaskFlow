@@ -88,7 +88,26 @@ function controls(){
  const addButton=$('add')?.querySelector('button[type="submit"]');
  if(addButton)addButton.disabled=busy;
 }
-async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];const ext=await req('GET','/extensions').catch(()=>null);topicStatuses=Array.isArray(ext?.topic_status)?ext.topic_status.filter(v=>typeof v==='string'&&v):[];topicTypes=Array.isArray(ext?.topic_type)?ext.topic_type:[];topicPriorities=Array.isArray(ext?.priority)?ext.priority:[];topicLabels=window.BCFTaskFlowPicker.labels(ext);teamMembers=await api.project.getMembers().then(v=>window.BCFTaskFlowPicker.members(v)).catch(err=>{console.warn('Team-medlemmer ikke tilgjengelige',err);return []});if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
+async function loadProjectMembers(){
+ let list=[],source='Workspace API';
+ try{
+  // Use the project-aware Workspace API rather than scraping the Team page.
+  const result=await api.project.getMembers();
+  list=window.BCFTaskFlowPicker.members(result);
+ }catch(error){console.warn('Workspace getMembers failed:',error.message)}
+ if(!list.length&&project?.id&&token){
+  source='Trimble Core API';
+  try{
+   const url='https://app.connect.trimble.com/tc/api/2.0/projects/'+encodeURIComponent(project.id)+'/users';
+   const response=await fetch(url,{headers:{Authorization:'Bearer '+token,Accept:'application/json'}});
+   if(response.ok){const data=await response.json();list=window.BCFTaskFlowPicker.members(data)}
+   else console.warn('Core project users HTTP',response.status);
+  }catch(error){console.warn('Core project member fallback failed:',error.message)}
+ }
+ console.info('BCFTaskFlow Team lookup:',source,list.length,'members');
+ return list;
+}
+async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];const ext=await req('GET','/extensions').catch(()=>null);topicStatuses=Array.isArray(ext?.topic_status)?ext.topic_status.filter(v=>typeof v==='string'&&v):[];topicTypes=Array.isArray(ext?.topic_type)?ext.topic_type:[];topicPriorities=Array.isArray(ext?.priority)?ext.priority:[];topicLabels=window.BCFTaskFlowPicker.labels(ext);teamMembers=await loadProjectMembers();if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet. Team: '+teamMembers.length+' medlemmer'+(!teamMembers.length?' (ikke tilgjengelig fra API)':'')+'.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
 // Presentation only: all API, storage, validation and mutation logic is unchanged.
 const statusTone=s=>cfg.completedStatuses.includes(String(s).toLowerCase())?'done':['in progress','pågår','active'].includes(String(s).toLowerCase())?'active':'new';
 function teamValues(){return [...new Set(teamMembers.map(m=>m.email).filter(Boolean))].sort()}
