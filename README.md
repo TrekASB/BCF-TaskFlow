@@ -1,22 +1,31 @@
-# BCF TaskFlow – Trimble Connect extension
+# BCF TaskFlow — Trimble Connect extension (v0.2.0)
 
-Versjon 0.1.0 (prototype). Hovedoppgaver og underoppgaver er **selvstendige BCF Topics**.
+## Oppsett
+GitHub Pages: `main / root`. Manifest: https://trekasb.github.io/BCF-TaskFlow/manifest.json
 
-## Kjøring
-- Aktiver GitHub Pages fra `main` / root under Settings → Pages.
-- Registrer manifest URL: `https://trekasb.github.io/BCF-TaskFlow/manifest.json` i Trimble Connect.
-- Åpne fra Trimble Connect 3D Viewer og godkjenn tilgang til token.
-- Bruk **Demo** for UI uten tilgang til et Trimble-prosjekt.
+## Funksjoner
+- Leser prosjektets BCF Topics og viser saksinformasjon (opprettet av, opprettet dato, prioritet, status, fag/tags og ansvarlig når tilgjengelig fra API).
+- Underoppgaver er **ikke egne BCF Topics**. De lagres som et JSON-datafelt i slutten av `description` på hovedsaken mellom `[BCFTaskFlow:v2]` og `[/BCFTaskFlow:v2]`.
+- Hver underoppgave: ID, tittel, status (Ny/Pågår/Ferdig), relativ vekt.
+- Vektet fremdrift: `sum(vekt for ferdige) / sum(alle vekter) * 100`. Ingen vekter => ingen fremdriftsdata.
+- Opprette, endre status/vekt og slette underoppgaver. Endringer sendes som `PUT /projects/{id}/topics/{guid}` med oppdatert `description`.
+- Demomodus uten lagring til Trimble.
 
-## Datamodell
-- Hvert barn er en vanlig BCF Topic, opprettet med en markør i beskrivelsen: `[BCFTaskFlow parent:<GUID>]`.
-- Hovedoppgaven får en `related_topics`-referanse til barnet dersom API-et tillater oppdatering.
-- Markøren er vår egen metadata-konvensjon, ikke en del av buildingSMART BCF-standarden.
-- Kun oppgaver med markøren inngår i TaskFlow-hierarkiet. Eksisterende relasjoner endres ikke utilsiktet.
-- Fremdrift = antall ferdige underoppgaver / antall underoppgaver.
-- BCF-status på hovedoppgaven oppdateres ikke automatisk.
+## OBS — data, begrensninger og migrering
+1. Metadata er **synlig i BCF-beskrivelsen** som JSON og følger eventuell eksport av denne. Dette er en midlertidig prototypeløsning, ikke et standard BCF-subtask-felt. Egnet til test, **ikke produksjon** uten vurdering av krav til informasjonsforvaltning og datalagring.
+2. Andre redigerer hovedsaken samtidig: vi henter fersk topic før lagring, men API gir ikke garantert transaksjonell konfliktkontroll, og siste skribent kan overskrive samtidig redigering. Ikke bruk flerbruker parallell-redigering før robust backend/versjonssperre er implementert.
+3. Oppgaver opprettet med v0.1.0 er fremdeles selvstendige BCF Topics. Disse slettes eller arkiveres **ikke automatisk**. Flytt dem manuelt ved behov og arkiver de gamle test-Topics i Trimble Connect.
+4. Feltet for fag/tag leses fra `labels`, `tags` eller `topic_labels`, avhengig av Trimble-svar. Bruker-/dato- og prioritetsfelter vises hvis levert av BCF API.
+5. Fremdrift påvirker **ikke** hovedsakens BCF-status.
+6. Beskrivelsen kan bli lang. Det finnes en lokal størrelsesgrense på 55 000 tegn og 100 underoppgaver.
+7. Autentisering gjennom Trimble Workspace API. Token lagres ikke i nettleserlagring.
+8. API/CORS, metadatafelt og rettigheter må testes i faktisk Trimble Connect-prosjekt. En `PUT` kan feile dersom projektet ikke tillater endringer i beskrivelse.
 
-## Begrensninger
-Dette er første integrasjonsprototype. API-tilganger, Trimble-prosjektets statuser, CORS, resultatpaginering og `related_topics` må valideres mot et faktisk prosjekt. Opprettelse av en ny underoppgave kan lykkes selv om koblingsoperasjonen feiler; da beholdes barnet med forelder-markør og vises etter oppfriskning. Ingen token lagres permanent. Data i demomodus er kun i minnet.
+## Test
+1. Åpne extension i Trimble Connect, velg eksisterende BCF Topic.
+2. Legg til «Modellering» (50), «Tegninger» (30), «Beskrivelse» (20).
+3. Sett «Modellering» til Ferdig, forvent 50 %.
+4. Oppdater siden, kontroller at deloppgaver/vekter består.
+5. Kontroller at ingen nye BCF Topics ble opprettet.
 
-Utviklet med AI-assistanse. Norconsult Norge.
+Norconsult Norge · AI-assistert utvikling.
