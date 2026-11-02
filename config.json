@@ -1,0 +1,15 @@
+{
+  "app": "BCFTaskFlow",
+  "version": "0.1.0",
+  "apiBase": "https://open21.connect.trimble.com/bcf/3.0/projects",
+  "childMarker": "BCFTaskFlow parent:",
+  "completedStatuses": [
+    "closed",
+    "done",
+    "completed",
+    "resolved",
+    "ferdig"
+  ],
+  "demoOnLaunch": false,
+  "notes": "Prosjekt og OAuth token hentes fra Trimble Workspace API. Endepunkter og tilgang må testes i prosjekt."
+}
