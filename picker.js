@@ -3,7 +3,7 @@
 const txt=v=>String(v??'');
 const html=v=>txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function members(source){
- const array=Array.isArray(source)?source:Array.isArray(source?.members)?source.members:Array.isArray(source?.items)?source.items:Array.isArray(source?.data)?source.data:[];
+ const array=Array.isArray(source)?source:Array.isArray(source?.members)?source.members:Array.isArray(source?.items)?source.items:Array.isArray(source?.data)?source.data:Array.isArray(source?.users)?source.users:Array.isArray(source?.data?.users)?source.data.users:Array.isArray(source?.results)?source.results:[];
  return array.filter(x=>x&&typeof x==='object'&&!/^(removed|deleted)$/i.test(x.status||'')).map(x=>{
  const person=x.user||x.member||x.profile||x;
  const email=person.email||person.emailAddress||person.mail||person.userEmail||x.email||x.emailAddress||'';
