@@ -11,12 +11,12 @@ button,input,select{font:inherit;border:1px solid #ccdae3;border-radius:8px;back
 h2{font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:20px 0 9px}.muted,.meta{font-size:12px;color:#607787}p{margin:8px 0}
 .tag{font-size:12px;border-radius:20px;background:#eaf1f5;padding:5px 9px}.details{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin:14px 0}.details>div{background:#f4f8fa;border-radius:8px;padding:10px}.details b{display:block;margin-top:4px;font-size:14px}
 .bar{height:13px;background:#e7edf0;border-radius:20px;overflow:hidden;margin:10px 0}.bar>div{height:100%;background:#0799ac;transition:width .25s}
-.task{padding:12px;border:1px solid #dce6ec;border-radius:10px;margin-top:9px}.task-controls{display:grid;grid-template-columns:1fr minmax(90px,115px) auto;gap:9px;align-items:end;margin-top:8px}
+.task{padding:12px;border:1px solid #dce6ec;border-radius:10px;margin-top:9px}.task-controls{display:grid;grid-template-columns:minmax(120px,1fr) minmax(135px,1fr) minmax(110px,1.3fr) auto;gap:9px;align-items:end;margin-top:8px}
 .field{display:grid;gap:4px}.field label{font-size:12px;color:#607787}.field input,.field select{width:100%}
 #notice{font-size:13px;white-space:pre-wrap;min-height:23px;margin-bottom:12px}.error{color:#ae3835}.success{color:#187352}#search{width:100%}
 .note{background:#fff8e9;border:1px solid #f1ddb0;padding:9px;border-radius:8px;font-size:12px;margin-top:12px}
-@media(max-width:750px){.grid{grid-template-columns:1fr}.task-controls{grid-template-columns:1fr 100px auto}main{padding:12px}}
-</style></head><body><header><div class="logo">TF</div><div><strong>BCF TaskFlow</strong><small>Norconsult Norge · BCF Topics · v0.3.0</small></div></header>
+@media(max-width:750px){.grid{grid-template-columns:1fr}.task-controls{grid-template-columns:1fr 1fr}main{padding:12px}}
+</style></head><body><header><div class="logo">TF</div><div><strong>BCF TaskFlow</strong><small>Norconsult Norge · BCF Topics · v0.4.0</small></div></header>
 <main><div class="row toolbar"><span class="tag" id="project">Ikke tilkoblet</span><div class="grow"></div><button id="demo">Vis demo</button><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div>
 <div id="notice" role="status">Kobler til Trimble Connect …</div>
 <div class="grid"><section class="panel"><h2>Hovedoppgaver</h2><input id="search" placeholder="Søk i BCF Topics…" type="search"><div id="parents"></div></section><section class="panel" id="details"><p class="muted">Velg en BCF Topic.</p></section></div>
@@ -31,7 +31,9 @@ const escapeHtml=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const id=t=>String(t?.guid||'');
 const status=t=>String(t?.topic_status||'–');
 const title=t=>String(t?.title||'(Uten tittel)');
-const done=t=>cfg.completedStatuses.includes(String(t.status||'').toLowerCase());
+const done=t=>completion(t)===100;
+const completion=t=>Number.isFinite(Number(t.completion))&&t.completion!==undefined?[0,25,50,75,100].includes(Number(t.completion))?Number(t.completion):0:(cfg.completedStatuses.includes(String(t.status||'').toLowerCase())?100:0);
+const completionOptions=value=>[0,25,50,75,100].map(n=>'<option value="'+n+'" '+(completion({completion:value})===n?'selected':'')+'>'+n+' %'+(n===0?' – Ikke påbegynt':n===100?' – Ferdig':'')+'</option>').join('');
 const weightLabel=n=>n<=2?'Enkel og rask':n<=4?'Avgrenset':n<=6?'Moderat':n<=8?'Krevende':'Svært krevende / tverrfaglig';
 const weightOptions=current=>Array.from({length:10},(_,i)=>{const n=i+1;return '<option value="'+n+'" '+(Number(current)===n?'selected':'')+'>'+n+' – '+weightLabel(n)+'</option>'}).join('');
 const fmt=x=>x?new Date(x).toLocaleString('nb-NO',{dateStyle:'medium',timeStyle:'short'}):'–';
@@ -44,7 +46,7 @@ const getRecord=t=>{
  catch(e){throw Error('Ugyldig TaskFlow JSON for '+title(t)+'. Ingen endringer blir lagret.')}
 };
 function pack(plain,tasks){return (plain?plain.trim()+'\n\n':'')+START+'\n'+JSON.stringify({schemaVersion:2,tasks},null,2)+'\n'+END;}
-function progress(tasks){const weight=tasks.reduce((a,t)=>a+Number(t.weight||0),0);return weight>0?Math.round(100*tasks.reduce((a,t)=>a+(done(t)?Number(t.weight||0):0),0)/weight):null}
+function progress(tasks){const weight=tasks.reduce((a,t)=>a+Number(t.weight||0),0);return weight>0?Math.round(100*tasks.reduce((a,t)=>a+Number(t.weight||0)*completion(t)/100,0)/weight):null}
 function notify(s,isError=false){$('notice').textContent=s;$('notice').className=isError?'error':'success'}
 const tokenOf=p=>{const v=p?.data??p;return typeof v==='string'&&!['pending','denied'].includes(v)?v:(v?.accessToken||v?.access_token||null)};
 async function req(method,path,body){if(mode!=='live'||!project?.id||!token)throw Error('Manglende Trimble-token');const r=await fetch(cfg.apiBase.replace(/\/$/,'')+'/'+encodeURIComponent(project.id)+path,{method,headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body!==undefined?{'Content-Type':'application/json'}:{})},body:body===undefined?undefined:JSON.stringify(body)});if(!r.ok)throw Error('BCF HTTP '+r.status+': '+(await r.text()).slice(0,350));return r.status===204?null:r.json()}
@@ -62,13 +64,14 @@ function render(){
  const tags=t.labels??t.tags??t.topic_labels??[];
  const fields=[['Opprettet av',t.creation_author||t.created_by],['Opprettet',fmt(t.creation_date||t.created_at)],['Prioritet',t.priority],['Status',status(t)],['Fag / tag',meta(tags)],['Ansvarlig',t.assigned_to]].map(([k,v])=>'<div><span class="meta">'+k+'</span><b>'+escapeHtml(v??'–')+'</b></div>').join('');
  $('details').innerHTML='<h2>'+escapeHtml(title(t))+'</h2><span class="meta">BCF GUID: '+escapeHtml(id(t))+'</span><div class="details">'+fields+'</div><p><strong>Samlet fremdrift: '+(p===null?'Ingen fremdriftsdata':p+' %')+'</strong> · '+completed+' av '+tasks.length+' ferdige</p><div class="bar"><div style="width:'+(p||0)+'%"></div></div><h3>Underoppgaver ('+tasks.length+')</h3>'+
- tasks.map(task=>'<div class="task"><strong>'+escapeHtml(task.title)+'</strong><div class="task-controls"><div class="field"><label>Status</label><select data-status="'+escapeHtml(task.id)+'">'+['New','In Progress','Done'].map(s=>'<option '+(task.status===s?'selected':'')+' value="'+s+'">'+(s==='New'?'Ny':s==='In Progress'?'Pågår':'Ferdig')+'</option>').join('')+'</select></div><div class="field"><label>Vektpoeng</label><select data-weight="'+escapeHtml(task.id)+'">'+weightOptions(Math.min(10,Math.max(1,Number(task.weight)||1)))+'</select></div><button class="danger" data-delete="'+escapeHtml(task.id)+'" title="Slett underoppgave">✕</button></div></div>').join('')+
+ tasks.map(task=>'<div class="task"><strong>'+escapeHtml(task.title)+'</strong><div class="task-controls"><div class="field"><label>Status</label><select data-status="'+escapeHtml(task.id)+'">'+['New','In Progress','Done'].map(s=>'<option '+(task.status===s?'selected':'')+' value="'+s+'">'+(s==='New'?'Ny':s==='In Progress'?'Pågår':'Ferdig')+'</option>').join('')+'</select></div><div class="field"><label>Ferdigstillelse</label><select data-completion="'+escapeHtml(task.id)+'">'+completionOptions(completion(task))+'</select></div><div class="field"><label>Vektpoeng</label><select data-weight="'+escapeHtml(task.id)+'">'+weightOptions(Math.min(10,Math.max(1,Number(task.weight)||1)))+'</select></div><button class="danger" data-delete="'+escapeHtml(task.id)+'" title="Slett underoppgave">✕</button></div></div>').join('')+
  '<form id="add"><h3>Ny underoppgave</h3><div class="field"><label for="newTitle">Tittel</label><input id="newTitle" maxlength="200" required placeholder="F.eks. Opprette tegninger"></div><div class="field" style="margin-top:9px"><label for="newWeight">Vektpoeng</label><select id="newWeight">'+weightOptions(3)+'</select></div><button style="margin-top:10px" class="primary" type="submit" '+(busy?'disabled':'')+'>+ Legg til underoppgave</button></form>'+
- '<div class="note">Vekting 1–10 vurderer relativ innsats, kompleksitet, risiko og tverrfaglige avhengigheter – ikke timer. 1–2: enkel/rask, 3–4: avgrenset, 5–6: moderat, 7–8: krevende, 9–10: omfattende/tverrfaglig. Del gjerne opp store oppgaver. Status på hovedsaken endres ikke automatisk.</div>';
- $('details').querySelectorAll('[data-status]').forEach(el=>el.onchange=()=>mutate(list=>list.map(x=>x.id===el.dataset.status?{...x,status:el.value}:x)));
+ '<div class="note">Vekting 1–10 vurderer relativ innsats, kompleksitet, risiko og tverrfaglige avhengigheter – ikke timer. 1–2: enkel/rask, 3–4: avgrenset, 5–6: moderat, 7–8: krevende, 9–10: omfattende/tverrfaglig. Del gjerne opp store oppgaver. Ferdigstillelse kan settes til 0, 25, 50, 75 eller 100 %. Status på hovedsaken endres ikke automatisk.</div>';
+ $('details').querySelectorAll('[data-status]').forEach(el=>el.onchange=()=>mutate(list=>list.map(x=>x.id===el.dataset.status?{...x,status:el.value,completion:el.value==='Done'?100:el.value==='New'?0:(completion(x)===0||completion(x)===100?25:completion(x))}:x)));
+ $('details').querySelectorAll('[data-completion]').forEach(el=>el.onchange=()=>{const percent=Number(el.value);mutate(list=>list.map(x=>x.id===el.dataset.completion?{...x,completion:percent,status:percent===100?'Done':percent===0?'New':'In Progress'}:x))});
  $('details').querySelectorAll('[data-weight]').forEach(el=>el.onchange=()=>{const w=Number(el.value);if(!Number.isFinite(w)||!Number.isInteger(w)||w<1||w>10){notify('Ugyldig vekting',true);render();return}mutate(list=>list.map(x=>x.id===el.dataset.weight?{...x,weight:w}:x))});
  $('details').querySelectorAll('[data-delete]').forEach(el=>el.onclick=()=>{if(confirm('Slette denne underoppgaven?'))mutate(list=>list.filter(x=>x.id!==el.dataset.delete))});
- $('add').onsubmit=e=>{e.preventDefault();const name=$('newTitle').value.trim(),weight=Number($('newWeight').value);if(name&&Number.isFinite(weight)&&Number.isInteger(weight)&&weight>=1&&weight<=10)mutate(list=>[...list,{id:crypto.randomUUID(),title:name,status:'New',weight}])};
+ $('add').onsubmit=e=>{e.preventDefault();const name=$('newTitle').value.trim(),weight=Number($('newWeight').value);if(name&&Number.isFinite(weight)&&Number.isInteger(weight)&&weight>=1&&weight<=10)mutate(list=>[...list,{id:crypto.randomUUID(),title:name,status:'New',completion:0,weight}])};
 }
 async function mutate(fn){
  if(busy)return;busy=true;controls();
