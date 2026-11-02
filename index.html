@@ -118,7 +118,7 @@ function render(){
  $('details').querySelectorAll('[data-delete]').forEach(el=>el.onclick=()=>{if(confirm('Slette denne underoppgaven?'))mutate(list=>list.filter(x=>x.id!==el.dataset.delete))});
  $('add').onsubmit=e=>{e.preventDefault();const name=$('newTitle').value.trim(),weight=Number($('newWeight').value);if(name&&Number.isFinite(weight)&&Number.isInteger(weight)&&weight>=1&&weight<=5)mutate(list=>[...list,{id:crypto.randomUUID(),title:name,status:'New',completion:0,weight,assignee:$('newAssignee').value.trim(),dueDate:$('newDue').value,discipline:$('newDiscipline').value.trim()}])};
 }
-async function saveKanban(parentId,fn){const previous=selected;selected=parentId;try{await mutate(fn)}finally{selected=previous}if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban)}
+async function saveKanban(parentId,fn){const previous=selected;selected=parentId;try{await mutate(fn)}finally{selected=previous}if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues())}
 function openFromDashboard(guid){selected=guid;switchView('tasks');render();}
 function switchView(view){
  activeView=view;
