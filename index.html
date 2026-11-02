@@ -1,138 +1,89 @@
 <!doctype html>
 <html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BCF TaskFlow | Norconsult</title>
-<script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
+<title>BCF TaskFlow</title><script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
 <style>
-:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#183448;background:#f4f7fa}*{box-sizing:border-box}
-body{margin:0}header{background:#163e54;color:white;padding:17px 22px;display:flex;gap:14px;align-items:center}
-.logo{background:#54bdd7;color:#113343;padding:8px 10px;border-radius:9px;font-weight:900}header strong{display:block;font-size:19px}header small{opacity:.8}
-main{padding:20px;max-width:1180px;margin:auto}.toolbar,.line{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.toolbar{margin-bottom:14px}.spacer{flex:1}button,select,input{font:inherit;border:1px solid #cbd8df;border-radius:8px;padding:10px;background:white;color:#19394d}
-button{cursor:pointer}button:hover{background:#e7f4f9}button.primary{background:#096d8b;border-color:#096d8b;color:white}button.primary:hover{background:#075773}button:disabled{opacity:.45;cursor:not-allowed}
-.panel{background:#fff;border:1px solid #dae5eb;border-radius:12px;margin:12px 0;padding:16px;box-shadow:0 3px 12px #173b5310}
-h1,h2,h3,p{margin:0 0 10px}h2{font-size:18px}.muted,.meta{font-size:12px;color:#667986}.status{min-height:20px;font-size:13px;color:#315668}
-.error{color:#9d3030}.empty{padding:24px;text-align:center;color:#697e8a}.tag{font-size:12px;background:#eaf2f7;border-radius:99px;padding:5px 9px}
-.task{border:1px solid #dce7eb;border-radius:10px;padding:12px;margin-top:10px;display:grid;grid-template-columns:minmax(130px,1fr) auto;gap:12px;align-items:center}
-.task strong{display:block}.task select{max-width:170px}.bar{background:#e8edf0;border-radius:99px;height:13px;overflow:hidden;margin:9px 0}.bar>div{height:100%;background:#0799ac;transition:width .2s}
-.grid{display:grid;grid-template-columns:minmax(210px,1fr) 2fr;gap:16px}.list{max-height:580px;overflow:auto}
-.parent{width:100%;text-align:left;margin:4px 0;display:block;white-space:normal}.parent.active{border-color:#0799ac;background:#e6f7fb}
-.field{display:grid;gap:6px;margin:10px 0}.field input{width:100%}#notice{white-space:pre-wrap}
-@media(max-width:760px){.grid{grid-template-columns:1fr}.task{grid-template-columns:1fr}main{padding:12px}}
-</style></head>
-<body><header><div class="logo">TF</div><div><strong>BCF TaskFlow</strong><small>Norconsult Norge · BCF Topics · 0.1.0</small></div></header>
-<main>
-<div class="toolbar"><span id="project" class="tag">Ikke tilkoblet</span><span class="spacer"></span><button id="demo">Vis demo</button><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div>
-<p id="notice" class="status" role="status">Kobler til Trimble Connect …</p>
-<div class="grid"><section class="panel"><h2>Hovedoppgaver</h2><input id="search" type="search" placeholder="Søk i BCF Topics…" aria-label="Søk i saker" style="width:100%"><div id="parents" class="list"></div></section>
-<section class="panel"><div id="details"><div class="empty">Velg en hovedoppgave til venstre.</div></div></section></div>
-<p class="muted">Alle underoppgaver opprettes som vanlige BCF Topics. Fremdrift beregnes fra sakens status. Ingen data lagres i denne nettleseren.</p>
-</main>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;background:#f4f7fa;color:#183448}*{box-sizing:border-box}body{margin:0}
+header{background:#173e54;color:white;padding:18px 23px;display:flex;gap:14px;align-items:center}.logo{background:#60c5db;padding:11px;border-radius:9px;color:#173e54;font-weight:800}
+header strong{display:block;font-size:19px}header small{opacity:.85}main{padding:20px;max-width:1180px;margin:auto}
+button,input,select{font:inherit;border:1px solid #ccdae3;border-radius:8px;background:white;color:#183448;padding:9px}button{cursor:pointer}button:hover{background:#ebf4f8}button:disabled{opacity:.5;cursor:not-allowed}button.primary{background:#08718c;color:white;border-color:#08718c}button.danger{color:#a53b32}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.grow{flex:1}.toolbar{margin-bottom:15px}.panel{background:white;border:1px solid #d7e3eb;padding:16px;border-radius:12px;box-shadow:0 3px 12px #173b5310}
+.grid{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:16px}.parent{display:block;width:100%;text-align:left;margin:6px 0}.parent.active{background:#e5f5fa;border-color:#0799ac}
+h2{font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:20px 0 9px}.muted,.meta{font-size:12px;color:#607787}p{margin:8px 0}
+.tag{font-size:12px;border-radius:20px;background:#eaf1f5;padding:5px 9px}.details{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin:14px 0}.details>div{background:#f4f8fa;border-radius:8px;padding:10px}.details b{display:block;margin-top:4px;font-size:14px}
+.bar{height:13px;background:#e7edf0;border-radius:20px;overflow:hidden;margin:10px 0}.bar>div{height:100%;background:#0799ac;transition:width .25s}
+.task{padding:12px;border:1px solid #dce6ec;border-radius:10px;margin-top:9px}.task-controls{display:grid;grid-template-columns:1fr minmax(90px,115px) auto;gap:9px;align-items:end;margin-top:8px}
+.field{display:grid;gap:4px}.field label{font-size:12px;color:#607787}.field input,.field select{width:100%}
+#notice{font-size:13px;white-space:pre-wrap;min-height:23px;margin-bottom:12px}.error{color:#ae3835}.success{color:#187352}#search{width:100%}
+.note{background:#fff8e9;border:1px solid #f1ddb0;padding:9px;border-radius:8px;font-size:12px;margin-top:12px}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.task-controls{grid-template-columns:1fr 100px auto}main{padding:12px}}
+</style></head><body><header><div class="logo">TF</div><div><strong>BCF TaskFlow</strong><small>Norconsult Norge · BCF Topics · v0.2.0</small></div></header>
+<main><div class="row toolbar"><span class="tag" id="project">Ikke tilkoblet</span><div class="grow"></div><button id="demo">Vis demo</button><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div>
+<div id="notice" role="status">Kobler til Trimble Connect …</div>
+<div class="grid"><section class="panel"><h2>Hovedoppgaver</h2><input id="search" placeholder="Søk i BCF Topics…" type="search"><div id="parents"></div></section><section class="panel" id="details"><p class="muted">Velg en BCF Topic.</p></section></div>
+<p class="meta">Underoppgaver lagres som metadata i hovedsakens BCF-beskrivelse, og opprettes ikke som egne BCF Topics. Oppdateringer lagres i prosjektet.</p></main>
 <script>
-(() => {
-'use strict';
+(()=>{'use strict';
 const $=id=>document.getElementById(id);
-let config={apiBase:'https://open21.connect.trimble.com/bcf/3.0/projects',childMarker:'BCFTaskFlow parent:',completedStatuses:['closed','done','completed','resolved','ferdig']};
-let api=null,token=null,project=null,topics=[],selected=null,mode='connecting',busy=false,serverStatuses=[];
-const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const guid=t=>String(t?.guid||'');
+const START='[BCFTaskFlow:v2]';const END='[/BCFTaskFlow:v2]';
+let cfg={apiBase:'https://open21.connect.trimble.com/bcf/3.0/projects',completedStatuses:['done','closed','completed','resolved','ferdig']};
+let api,token,project,topics=[],selected='',mode='connecting',busy=false;
+const escapeHtml=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const id=t=>String(t?.guid||'');
+const status=t=>String(t?.topic_status||'–');
 const title=t=>String(t?.title||'(Uten tittel)');
-const status=t=>String(t?.topic_status||'Open');
-const completed=t=>config.completedStatuses.includes(status(t).toLowerCase());
-const marker=id=>'['+config.childMarker+id+']';
-function parentGuid(t){const m=String(t.description||'').match(/\[BCFTaskFlow parent:([a-zA-Z0-9-]+)\]/);return m?m[1]:null}
-const children=id=>topics.filter(t=>parentGuid(t)===id);
-const roots=()=>topics.filter(t=>!parentGuid(t));
-const progress=list=>list.length?Math.round(100*list.filter(completed).length/list.length):null;
-function notice(message,error=false){$('notice').className='status'+(error?' error':'');$('notice').textContent=message}
-function tokenOf(p){const v=p?.data??p;return typeof v==='string'&&!['pending','denied'].includes(v)?v:(v?.accessToken||v?.access_token||null)}
-function setControls(){$('refresh').disabled=mode!=='live'||busy}
-async function request(method,path,body){
- if(mode!=='live'||!token||!project?.id)throw Error('Ingen aktiv Trimble-tilkobling');
- const base=config.apiBase.replace(/\/$/,'');
- const url=base+'/'+encodeURIComponent(project.id)+path;
- const response=await fetch(url,{method,headers:{'Authorization':'Bearer '+token,'Accept':'application/json',...(body!==undefined?{'Content-Type':'application/json'}:{})},body:body!==undefined?JSON.stringify(body):undefined});
- if(!response.ok)throw Error('BCF API HTTP '+response.status+' – '+(await response.text()).slice(0,250));
- return response.status===204?null:response.json();
-}
-async function load(){
- if(mode!=='live')return;busy=true;setControls();notice('Henter BCF Topics …');
- try{
- const data=await request('GET','/topics');
- topics=Array.isArray(data)?data:Array.isArray(data?.topics)?data.topics:[];
- selected=topics.some(t=>guid(t)===selected)?selected:guid(roots()[0]);
- const statuses=await request('GET','/extensions').catch(()=>null);
- serverStatuses=Array.isArray(statuses?.topic_status)?statuses.topic_status.filter(s=>typeof s==='string'&&s.trim()):[];
- notice('Tilkoblet. '+topics.length+' BCF Topics hentet.');render();
- }catch(e){notice('Kunne ikke hente BCF Topics: '+e.message,true)}
- finally{busy=false;setControls()}
-}
-function demo(){
- mode='demo';project={id:'demo',name:'Demoprosjekt'};
- topics=[{guid:'parent-demo',title:'Leveranse Vegmodell 10100',topic_status:'Open'},
- {guid:'child-demo-1',title:'Modellering',description:marker('parent-demo'),topic_status:'Closed'},
- {guid:'child-demo-2',title:'Opprette tegninger',description:marker('parent-demo'),topic_status:'In Progress'},
- {guid:'child-demo-3',title:'Utarbeide beskrivelse',description:marker('parent-demo'),topic_status:'Open'}];
- selected='parent-demo';serverStatuses=['Open','In Progress','Closed'];$('project').textContent='Demo – ingen lagring';notice('Demomodus: endringer påvirker kun denne siden.');setControls();render();
-}
+const done=t=>cfg.completedStatuses.includes(String(t.status||'').toLowerCase());
+const fmt=x=>x?new Date(x).toLocaleString('nb-NO',{dateStyle:'medium',timeStyle:'short'}):'–';
+const meta=x=>Array.isArray(x)?x.join(', '):x||'–';
+const getRecord=t=>{
+ const d=String(t.description||'');const a=d.indexOf(START),b=d.indexOf(END,a+START.length);
+ if(a===-1||b===-1)return {tasks:[],plain:d};
+ const raw=d.slice(a+START.length,b).trim();
+ try{const v=JSON.parse(raw);return {tasks:Array.isArray(v.tasks)?v.tasks:[],plain:(d.slice(0,a)+d.slice(b+END.length)).trim()};}
+ catch(e){throw Error('Ugyldig TaskFlow JSON for '+title(t)+'. Ingen endringer blir lagret.')}
+};
+function pack(plain,tasks){return (plain?plain.trim()+'\n\n':'')+START+'\n'+JSON.stringify({schemaVersion:2,tasks},null,2)+'\n'+END;}
+function progress(tasks){const weight=tasks.reduce((a,t)=>a+Number(t.weight||0),0);return weight>0?Math.round(100*tasks.reduce((a,t)=>a+(done(t)?Number(t.weight||0):0),0)/weight):null}
+function notify(s,isError=false){$('notice').textContent=s;$('notice').className=isError?'error':'success'}
+const tokenOf=p=>{const v=p?.data??p;return typeof v==='string'&&!['pending','denied'].includes(v)?v:(v?.accessToken||v?.access_token||null)};
+async function req(method,path,body){if(mode!=='live'||!project?.id||!token)throw Error('Manglende Trimble-token');const r=await fetch(cfg.apiBase.replace(/\/$/,'')+'/'+encodeURIComponent(project.id)+path,{method,headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body!==undefined?{'Content-Type':'application/json'}:{})},body:body===undefined?undefined:JSON.stringify(body)});if(!r.ok)throw Error('BCF HTTP '+r.status+': '+(await r.text()).slice(0,350));return r.status===204?null:r.json()}
+function controls(){$('refresh').disabled=busy||mode!=='live'}
+async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
+function demo(){mode='demo';project={name:'Demoprosjekt'};topics=[{guid:'parent-demo',title:'Leveranse Vegmodell 10100',topic_status:'New',creation_author:'Prosjektleder',creation_date:new Date().toISOString(),priority:'Normal',labels:['VEG'],description:pack('Leveranse av fagmodell', [{id:'a',title:'Modellering',status:'Done',weight:50},{id:'b',title:'Tegninger',status:'New',weight:30},{id:'c',title:'Beskrivelse',status:'New',weight:20}])}];selected='parent-demo';controls();render();notify('Demo – endringer lagres kun i minnet.')}
 function render(){
- $('project').textContent=mode==='demo'?'Demo – ingen lagring':(project?.name||'Trimble Connect');
+ $('project').textContent=mode==='demo'?'Demo':project?.name||'Trimble Connect';
  const q=$('search').value.toLowerCase();
- $('parents').innerHTML=roots().filter(t=>title(t).toLowerCase().includes(q)).map(t=>{
- const c=children(guid(t)),p=progress(c);return '<button class="parent '+(guid(t)===selected?'active':'')+'" data-parent="'+esc(guid(t))+'"><strong>'+esc(title(t))+'</strong><br><span class="muted">'+(p===null?'Ingen underoppgaver':p+' % ferdig · '+c.length+' deloppgaver')+'</span></button>';
- }).join('')||'<div class="empty">Ingen BCF-saker funnet.</div>';
+ $('parents').innerHTML=topics.filter(t=>title(t).toLowerCase().includes(q)).map(t=>{let p=null;try{p=progress(getRecord(t).tasks)}catch(e){}return '<button class="parent '+(id(t)===selected?'active':'')+'" data-parent="'+escapeHtml(id(t))+'"><b>'+escapeHtml(title(t))+'</b><br><span class="meta">'+(p===null?'Ingen fremdriftsdata':p+' % ferdig')+'</span></button>'}).join('')||'<p class="muted">Ingen saker funnet.</p>';
  $('parents').querySelectorAll('[data-parent]').forEach(el=>el.onclick=()=>{selected=el.dataset.parent;render()});
- const parent=topics.find(t=>guid(t)===selected);
- if(!parent){$('details').innerHTML='<div class="empty">Velg en hovedoppgave til venstre.</div>';return}
- const cs=children(selected),p=progress(cs),done=cs.filter(completed).length;
- const opts=Array.from(new Set([...(mode==='demo'?serverStatuses:serverStatuses.length?serverStatuses:topics.map(status)),...cs.map(status)].filter(Boolean)));
- $('details').innerHTML='<div class="line"><h2 style="flex:1">'+esc(title(parent))+'</h2><span class="tag">'+esc(status(parent))+'</span></div>'+
- '<p class="meta">BCF GUID: '+esc(guid(parent))+'</p><p><b>Samlet fremdrift: '+(p===null?'Ingen fremdriftsdata':p+' %')+'</b> · '+done+' av '+cs.length+' ferdige</p>'+
- '<div class="bar"><div style="width:'+(p||0)+'%"></div></div><h3 style="margin-top:18px">Underoppgaver</h3>'+
- (cs.length?cs.map(t=>'<div class="task"><div><strong>'+esc(title(t))+'</strong><span class="meta">BCF · '+esc(guid(t))+'</span></div><select data-status="'+esc(guid(t))+'" aria-label="Status for '+esc(title(t))+'">'+opts.map(s=>'<option value="'+esc(s)+'" '+(s===status(t)?'selected':'')+'>'+esc(s)+'</option>').join('')+'</select></div>').join(''):'<p class="muted">Ingen underoppgaver opprettet.</p>')+
- '<form id="add"><h3 style="margin-top:24px">Ny underoppgave</h3><div class="field"><label for="newTitle">Tittel</label><input id="newTitle" required maxlength="200" placeholder="F.eks. Opprette tegninger"></div><button class="primary" type="submit" '+(busy?'disabled':'')+'>+ Opprett BCF underoppgave</button></form>';
- $('details').querySelectorAll('[data-status]').forEach(el=>el.onchange=()=>changeStatus(el.dataset.status,el.value));
- $('add').onsubmit=e=>{e.preventDefault();addTask($('newTitle').value.trim())};
+ const t=topics.find(x=>id(x)===selected);if(!t){$('details').innerHTML='<p class="muted">Velg en sak.</p>';return}
+ let tasks;try{tasks=getRecord(t).tasks}catch(e){$('details').textContent=e.message;return}
+ const p=progress(tasks),completed=tasks.filter(done).length;
+ const tags=t.labels??t.tags??t.topic_labels??[];
+ const fields=[['Opprettet av',t.creation_author||t.created_by],['Opprettet',fmt(t.creation_date||t.created_at)],['Prioritet',t.priority],['Status',status(t)],['Fag / tag',meta(tags)],['Ansvarlig',t.assigned_to]].map(([k,v])=>'<div><span class="meta">'+k+'</span><b>'+escapeHtml(v??'–')+'</b></div>').join('');
+ $('details').innerHTML='<h2>'+escapeHtml(title(t))+'</h2><span class="meta">BCF GUID: '+escapeHtml(id(t))+'</span><div class="details">'+fields+'</div><p><strong>Samlet fremdrift: '+(p===null?'Ingen fremdriftsdata':p+' %')+'</strong> · '+completed+' av '+tasks.length+' ferdige</p><div class="bar"><div style="width:'+(p||0)+'%"></div></div><h3>Underoppgaver ('+tasks.length+')</h3>'+
+ tasks.map(task=>'<div class="task"><strong>'+escapeHtml(task.title)+'</strong><div class="task-controls"><div class="field"><label>Status</label><select data-status="'+escapeHtml(task.id)+'">'+['New','In Progress','Done'].map(s=>'<option '+(task.status===s?'selected':'')+' value="'+s+'">'+(s==='New'?'Ny':s==='In Progress'?'Pågår':'Ferdig')+'</option>').join('')+'</select></div><div class="field"><label>Vektpoeng</label><input data-weight="'+escapeHtml(task.id)+'" type="number" min="0" max="10000" step="1" value="'+Number(task.weight||0)+'"></div><button class="danger" data-delete="'+escapeHtml(task.id)+'" title="Slett underoppgave">✕</button></div></div>').join('')+
+ '<form id="add"><h3>Ny underoppgave</h3><div class="field"><label for="newTitle">Tittel</label><input id="newTitle" maxlength="200" required placeholder="F.eks. Opprette tegninger"></div><div class="field" style="margin-top:9px"><label for="newWeight">Vektpoeng</label><input id="newWeight" type="number" min="0" max="10000" step="1" value="1" required></div><button style="margin-top:10px" class="primary" type="submit" '+(busy?'disabled':'')+'>+ Legg til underoppgave</button></form>'+
+ '<div class="note">Vekter beregnes relativt. F.eks. 50 + 30 + 20 gir 50 % når oppgaven med vekt 50 er ferdig. Status på hovedsaken endres ikke automatisk.</div>';
+ $('details').querySelectorAll('[data-status]').forEach(el=>el.onchange=()=>mutate(list=>list.map(x=>x.id===el.dataset.status?{...x,status:el.value}:x)));
+ $('details').querySelectorAll('[data-weight]').forEach(el=>el.onchange=()=>{const w=Number(el.value);if(!Number.isFinite(w)||w<0||w>10000){notify('Ugyldig vekting',true);render();return}mutate(list=>list.map(x=>x.id===el.dataset.weight?{...x,weight:w}:x))});
+ $('details').querySelectorAll('[data-delete]').forEach(el=>el.onclick=()=>{if(confirm('Slette denne underoppgaven?'))mutate(list=>list.filter(x=>x.id!==el.dataset.delete))});
+ $('add').onsubmit=e=>{e.preventDefault();const name=$('newTitle').value.trim(),weight=Number($('newWeight').value);if(name&&Number.isFinite(weight)&&weight>=0&&weight<=10000)mutate(list=>[...list,{id:crypto.randomUUID(),title:name,status:'New',weight}])};
 }
-async function changeStatus(id,newStatus){
- const t=topics.find(x=>guid(x)===id);if(!t)return;
- if(mode==='demo'){t.topic_status=newStatus;render();return}
- if(busy)return;busy=true;setControls();
- try{await request('PUT','/topics/'+encodeURIComponent(id),{topic_status:newStatus});await load();notice('Status oppdatert i BCF Topics.')}
- catch(e){notice('Status ble ikke oppdatert: '+e.message,true);busy=false;setControls();render()}
-}
-async function addTask(name){
- if(!name||busy)return;
- if(mode==='demo'){topics.push({guid:'demo-'+crypto.randomUUID(),title:name,description:marker(selected),topic_status:'Open'});render();return}
- busy=true;setControls();notice('Oppretter BCF Topic …');
- let newGuid=null;
+async function mutate(fn){
+ if(busy)return;busy=true;controls();
  try{
- const createStatus=serverStatuses.find(s=>/^(open|new|åpen|ny)$/i.test(s))||serverStatuses.find(s=>/^(in progress|pågår)$/i.test(s))||serverStatuses[0]||status(topics.find(t=>guid(t)===selected));
- if(!createStatus)throw Error('Kunne ikke finne en gyldig status i prosjektet.');
- const result=await request('POST','/topics',{title:name,description:marker(selected)+'\nOpprettet av BCFTaskFlow.',topic_status:createStatus});
- newGuid=result?.guid;
- if(!newGuid)throw Error('API-et returnerte ingen GUID. Kontroller BCF-sakene før nytt forsøk.');
- let warning='';
- try{
- const related=await request('GET','/topics/'+encodeURIComponent(selected)+'/related_topics');
- const existing=Array.isArray(related)?related:Array.isArray(related?.related_topics)?related.related_topics:[];
- const rel=[...existing.filter(x=>x?.related_topic?.guid),{related_topic:{guid:newGuid}}];
- await request('PUT','/topics/'+encodeURIComponent(selected)+'/related_topics',rel);
- }catch(e){warning=' BCF-saken er opprettet, men related_topics kunne ikke oppdateres: '+e.message+'. Forelder-markøren beholdes.'}
- await load();notice('Underoppgave opprettet i Trimble Connect.'+warning,!!warning);
- }catch(e){notice('Opprettelse feilet: '+e.message,true)}
- finally{busy=false;setControls()}
+ const t=topics.find(x=>id(x)===selected);if(!t)throw Error('Hovedoppgave mangler');
+ // Fetch fresh parent before every write to avoid overwriting stale issue fields.
+ const fresh=mode==='live'?await req('GET','/topics/'+encodeURIComponent(selected)):t;
+ const current=getRecord(fresh);
+ const next=fn(current.tasks.map(x=>({...x})));
+ if(next.length>100)throw Error('Maksimalt 100 underoppgaver i én hovedsak.');
+ const description=pack(current.plain,next);if(description.length>55000)throw Error('For mange underoppgaver for BCF-beskrivelsen.');
+ if(mode==='live'){await req('PUT','/topics/'+encodeURIComponent(selected),{description});await load()}
+ else{t.description=description;render()}
+ notify('Underoppgavene er '+(mode==='demo'?'oppdatert i demo.':'lagret på hovedoppgaven i BCF Topics.'));
+ }catch(e){notify('Lagring feilet: '+e.message,true);render()}finally{busy=false;controls()}
 }
-async function connect(){
- try{
- const cfg=await fetch('./config.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(cfg)config={...config,...cfg};
- if(!window.TrimbleConnectWorkspace||window.parent===window)throw Error('Åpne extensionen fra Trimble Connect, eller velg demo.');
- api=await TrimbleConnectWorkspace.connect(window.parent,(event,args)=>{if(event==='extension.accessToken'){const incoming=tokenOf(args);if(incoming){token=incoming;if(mode==='live')notice('Trimble-token fornyet.')}}});
- project=await api.project.getCurrentProject();
- const permission=await api.extension.requestPermission('accesstoken');token=tokenOf(permission);
- if(!token)throw Error('Tilgangstoken er ikke godkjent. Gi extensionen tilgang i Trimble Connect.');
- mode='live';await load();
- }catch(e){mode='offline';notice(e.message,true);setControls()}
-}
-$('demo').onclick=demo;$('refresh').onclick=load;$('search').oninput=render;connect();
+async function connect(){try{const c=await fetch('./config.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(c)cfg={...cfg,...c};if(!window.TrimbleConnectWorkspace||window.parent===window)throw Error('Åpne i Trimble Connect eller velg demo.');api=await TrimbleConnectWorkspace.connect(window.parent,(event,args)=>{if(event==='extension.accessToken'){const x=tokenOf(args);if(x)token=x}});project=await api.project.getCurrentProject();token=tokenOf(await api.extension.requestPermission('accesstoken'));if(!token)throw Error('Token-tilgang ikke godkjent.');mode='live';await load()}catch(e){mode='offline';notify(e.message,true);controls()}}
+$('search').oninput=render;$('demo').onclick=demo;$('refresh').onclick=load;connect();
 })();
 </script></body></html>
