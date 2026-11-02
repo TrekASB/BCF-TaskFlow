@@ -22,6 +22,7 @@ header .brand-logo{height:auto;max-height:40px;width:148px;object-fit:contain;fl
 .kb-parentgroup{border-left:4px solid var(--parent-color);margin:10px 0 16px;background:#f0f3f7;border-radius:6px;padding:6px}.kb-parentcard{padding:10px;background:#fff;border-radius:5px;border:1px solid var(--border);border-top:3px solid var(--parent-color);margin-bottom:7px}.kb-parentcard strong,.kb-parentcard small{display:block;overflow-wrap:anywhere}.kb-parentcard strong{font-size:13px;margin:6px 0}.kb-parentcard small{font-size:11px;color:var(--muted)}.kb-parentmark,.kb-parentref{color:var(--parent-color);font-weight:700;font-size:10px;letter-spacing:.3px}.kb-childcard{margin-left:10px;width:calc(100% - 10px);border-left:3px solid var(--parent-color)}.kb-childcard .kb-parentref{display:block;margin-bottom:6px}.kb-nochild{padding:10px}.bd-childrow{padding-left:16px;border-left:3px solid #0c66e4;display:inline-block}.kb-column h3 span{font-size:10px}
 .tf-picker{position:relative;min-width:0}.tf-picker input{width:100%;padding-right:32px}.tf-picker-toggle{position:absolute;right:2px;top:2px;min-height:30px;padding:2px 8px;background:transparent;border:0;z-index:1}.tf-picker-menu{position:absolute;top:100%;left:0;right:0;max-height:230px;overflow-y:auto;background:white;border:1px solid #b5c1cf;box-shadow:0 8px 22px #172b4d30;z-index:1000;border-radius:5px}.tf-picker-option{width:100%;border:0;border-radius:0;display:block;text-align:left;min-height:34px;padding:8px 10px;font-weight:400}.tf-picker-option:hover,.tf-picker-option:focus{background:#e9f2ff}.tf-picker-option strong,.tf-picker-option small{display:block}.tf-picker-option small{font-size:10px;color:#626f86}.tf-picker-empty{padding:10px;color:#626f86;font-size:12px}.panel,.task,#add{overflow:visible}
 .bd-chart-box{position:relative;height:285px;min-height:240px}.bd-card{break-inside:avoid}.bd-card canvas{width:100%!important;height:100%!important}.bd-stats{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:650px){.bd-chart-box{height:245px}.bd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kb-edit-parent{display:block;margin-top:9px;font-size:11px;color:var(--blue);background:#e9f2ff;padding:5px 9px;min-height:28px;border-color:#cce0ff}#kbParentDialog{border:1px solid var(--border);border-radius:8px;padding:22px;width:min(520px,95vw);max-height:90vh;overflow-y:auto}#kbParentDialog::backdrop{background:#172b4d77}#kbParentForm{display:grid;gap:11px}#kbParentForm label{display:grid;gap:5px;font-size:12px;font-weight:600}#kbParentForm input,#kbParentForm select,#kbParentForm textarea{width:100%;padding:8px;border:1px solid var(--border);border-radius:4px}
 </style>
 </head>
 <body>
@@ -132,7 +133,7 @@ function tagOptions(){return tagValues().map(x=>'<option value="'+escapeHtml(x)+
 function render(){
  if(window.BCFTaskFlowDashboard)window.BCFTaskFlowDashboard.render(topics,getRecord,openFromDashboard,project?.name);
  $('project').textContent=project?.name||'Trimble Connect';
- if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues());
+ if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues(),saveParentKanban,topicStatuses);
  const q=$('search').value.toLowerCase();
  $('parents').innerHTML=topics.filter(t=>title(t).toLowerCase().includes(q)).map(t=>{let p=null;try{p=progress(getRecord(t).tasks)}catch(e){}return '<button class="parent '+(id(t)===selected?'active':'')+'" data-parent="'+escapeHtml(id(t))+'" aria-pressed="'+(id(t)===selected)+'"><span class="issue-icon" aria-hidden="true">✓</span><span class="parent-body"><b>'+escapeHtml(title(t))+'</b><span class="parent-meta"><span class="status-pill" data-tone="'+statusTone(status(t))+'">'+escapeHtml(status(t))+'</span><span>'+(p===null?'Ingen fremdriftsdata':p+' % ferdig')+'</span></span></span></button>'}).join('')||'<div class="empty-state" style="border:0"><strong>Ingen saker funnet</strong><p>Prøv et annet søk eller oppdater fra Trimble.</p></div>';
  $('parents').querySelectorAll('[data-parent]').forEach(el=>el.onclick=()=>{selected=el.dataset.parent;render()});
@@ -157,7 +158,20 @@ function render(){
  window.BCFTaskFlowPicker.attach($('newDiscipline'),tagValues().map(t=>({value:t,label:t})),{placeholder:'Velg prosjekt-tag …'});
  $('add').onsubmit=e=>{e.preventDefault();const name=$('newTitle').value.trim(),weight=Number($('newWeight').value);if(name&&Number.isFinite(weight)&&Number.isInteger(weight)&&weight>=1&&weight<=5)mutate(list=>[...list,{id:crypto.randomUUID(),title:name,status:'New',completion:0,weight,assignee:$('newAssignee').value.trim(),dueDate:$('newDue').value,discipline:$('newDiscipline').value.trim()}])};
 }
-async function saveKanban(parentId,fn){const previous=selected;selected=parentId;try{await mutate(fn)}finally{selected=previous}if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues())}
+async function saveParentKanban(parentId,payload,plain){
+ if(busy)throw Error('En annen oppdatering pågår.');
+ busy=true;controls();
+ try{
+  const latest=await req('GET','/topics/'+encodeURIComponent(parentId));
+  const record=getRecord(latest);
+  // Rebuild the description using fresh TaskFlow metadata so edits never erase subtasks.
+  const data={...payload,description:pack(plain,record.tasks)};
+  await req('PUT','/topics/'+encodeURIComponent(parentId),data);
+  await load();
+  notify('Hovedsaken er oppdatert i BCF Topics.');
+ }finally{busy=false;controls()}
+}
+async function saveKanban(parentId,fn){const previous=selected;selected=parentId;try{await mutate(fn)}finally{selected=previous}if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues(),saveParentKanban,topicStatuses)}
 function openFromDashboard(guid){selected=guid;switchView('tasks');render();}
 function switchView(view){
  activeView=view;
@@ -167,7 +181,7 @@ function switchView(view){
  $('tabDashboard').classList.toggle('active',view==='dashboard');$('tabKanban').classList.toggle('active',view==='kanban');
  $('tabTasks').setAttribute('aria-selected',String(view==='tasks'));
  $('tabDashboard').setAttribute('aria-selected',String(view==='dashboard'));$('tabKanban').setAttribute('aria-selected',String(view==='kanban'));
- if(view==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues());
+ if(view==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues(),saveParentKanban,topicStatuses);
  if(view==='dashboard'&&window.BCFTaskFlowDashboard)window.BCFTaskFlowDashboard.render(topics,getRecord,openFromDashboard,project?.name);
 }
 function selectOptions(el,values,optional=false){
