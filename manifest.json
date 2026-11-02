@@ -4,6 +4,7 @@
   "url": "https://trekasb.github.io/BCF-TaskFlow/index.html",
   "description": "BCF Topics hovedoppgaver, underoppgaver og fremdrift – Norconsult Norge",
   "extensionType": [
-    "3dviewer"
+    "3dviewer",
+    "project"
   ]
 }
