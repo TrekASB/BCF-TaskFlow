@@ -30,9 +30,9 @@ header .brand-logo{height:auto;max-height:40px;width:148px;object-fit:contain;fl
 <header><img class="brand-logo" src="./norconsult-logo-black.png" alt="Norconsult"><div class="brand-copy"><strong>BCF TaskFlow</strong><div class="org">Norconsult Norge</div><div class="dev">Developed by Norconsult, (AI-assisted development). Kontaktperson: Edin.Dzakmic@norconsult.com.</div></div><div class="header-label">Trimble Connect Extension</div></header>
 <main>
 <nav class="breadcrumb" aria-label="Brødsmulesti"><span>Trimble Connect</span><span aria-hidden="true">/</span><span>BCF Topics</span><span aria-hidden="true">/</span><span>Oppgaver</span></nav>
-<div class="page-heading"><div><h1>Oppgaver</h1><p>Oversikt over hovedoppgaver, underoppgaver og fremdrift.</p></div><div class="row toolbar"><span class="tag" id="project">Ikke tilkoblet</span><button id="newMain" class="primary" disabled>+ Ny hovedsak</button><button id="teamDebug" type="button" title="Diagnostikk for Team-medlemmer">Team-diagnostikk</button><button id="teamImportOpen" type="button" title="Lim inn medlemmer fra Team">Importer Team</button><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div></div>
+<div class="page-heading"><div><h1>Oppgaver</h1><p>Oversikt over hovedoppgaver, underoppgaver og fremdrift.</p></div><div class="row toolbar"><span class="tag" id="project">Ikke tilkoblet</span><button id="newMain" class="primary" disabled>+ Ny hovedsak</button><button id="teamDebug" type="button" title="Diagnostikk for Team-medlemmer">Team-diagnostikk</button><button id="refresh" disabled>↻ Oppdater fra Trimble</button></div></div>
 <div class="view-tabs" role="tablist" aria-label="Visning"><button id="tabTasks" class="active" role="tab" aria-selected="true" type="button">Oppgaver</button><button id="tabDashboard" role="tab" aria-selected="false" type="button">Dashboard</button><button id="tabKanban" role="tab" aria-selected="false" type="button">Kanban</button></div>
-<dialog id="mainDlg"><form id="mainForm"><h2>Opprett hovedsak i BCF Topics</h2><label>Tittel *<input name="title" required maxlength="200"></label><label>Beskrivelse<textarea name="description" rows="3"></textarea></label><label>Status<select name="topic_status" id="mainStatus" required></select></label><label>Type<select name="topic_type" id="mainType" required></select></label><label>Prioritet<select name="priority" id="mainPriority" required></select></label><label>Fag (tag)<select name="label" id="mainTag"></select></label><div class="row"><button type="button" id="mainCancel">Avbryt</button><button class="primary" type="submit" id="mainSave">Opprett BCF Topic</button></div></form></dialog><dialog id="subAssignmentDlg" aria-labelledby="subAssignmentHeading"><form id="subAssignmentForm"><h2 id="subAssignmentHeading">Endre ansvarlig og tidsfrist</h2><p id="subAssignmentTitle" class="meta"></p><div class="field"><label for="subAssignmentOwner">Ansvarlig</label><div id="subAssignmentOwnerBox"></div></div><div class="field"><label for="subAssignmentDue">Tidsfrist</label><input id="subAssignmentDue" type="date"></div><div class="row" style="justify-content:flex-end"><button type="button" id="subAssignmentCancel">Avbryt</button><button type="submit" class="primary" id="subAssignmentSave">Lagre endringer</button></div></form></dialog><dialog id="teamImport"><h2>Importer prosjektmedlemmer</h2><p class="meta">Når Team API ikke er tilgjengelig: Åpne Team → Alle prosjektmedlemmer. Kopier navn og e-post fra Excel/medlemslisten og lim inn nedenfor. Ingen data sendes til GitHub eller ekstern tjeneste. Importen gjelder kun denne åpne sesjonen.</p><textarea id="teamPaste" rows="9" style="width:100%" placeholder="Navn; e-post\nEksempel Person; person@example.com"></textarea><div class="row" style="justify-content:flex-end;margin-top:12px"><button id="teamImportCancel" type="button">Avbryt</button><button id="teamImportSave" type="button" class="primary">Bruk medlemsliste</button></div></dialog><div id="notice" role="status" aria-live="polite">Kobler til Trimble Connect …</div>
+<dialog id="mainDlg"><form id="mainForm"><h2>Opprett hovedsak i BCF Topics</h2><label>Tittel *<input name="title" required maxlength="200"></label><label>Beskrivelse<textarea name="description" rows="3"></textarea></label><label>Status<select name="topic_status" id="mainStatus" required></select></label><label>Type<select name="topic_type" id="mainType" required></select></label><label>Prioritet<select name="priority" id="mainPriority" required></select></label><label>Fag (tag)<select name="label" id="mainTag"></select></label><div class="row"><button type="button" id="mainCancel">Avbryt</button><button class="primary" type="submit" id="mainSave">Opprett BCF Topic</button></div></form></dialog><dialog id="subAssignmentDlg" aria-labelledby="subAssignmentHeading"><form id="subAssignmentForm"><h2 id="subAssignmentHeading">Endre ansvarlig og tidsfrist</h2><p id="subAssignmentTitle" class="meta"></p><div class="field"><label for="subAssignmentOwner">Ansvarlig</label><div id="subAssignmentOwnerBox"></div></div><div class="field"><label for="subAssignmentDue">Tidsfrist</label><input id="subAssignmentDue" type="date"></div><div class="row" style="justify-content:flex-end"><button type="button" id="subAssignmentCancel">Avbryt</button><button type="submit" class="primary" id="subAssignmentSave">Lagre endringer</button></div></form></dialog><div id="notice" role="status" aria-live="polite">Kobler til Trimble Connect …</div>
 <div id="tasksView"><div class="grid"><section class="panel list-panel" aria-labelledby="parents-heading"><div class="list-header"><h2 id="parents-heading">Hovedoppgaver <span class="section-kicker">BCF TOPICS</span></h2><div class="search-wrap"><input id="search" aria-label="Søk i hovedoppgaver" placeholder="Søk i BCF Topics …" type="search"></div></div><div id="parents"></div><div class="list-footer">Velg en hovedoppgave for å se underoppgaver.</div></section><section class="panel" id="details" aria-label="Oppgavedetaljer"><div class="empty-state initial-empty"><div class="empty-icon" aria-hidden="true">✓</div><strong>Velg en hovedoppgave</strong><p>Detaljer og underoppgaver vises her.</p></div></section></div></div><div id="dashboard" role="tabpanel" aria-label="Dashboard" hidden></div><div id="kanban" role="tabpanel" aria-label="Kanban" hidden></div>
 <p class="footer-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor"/><path d="M8 7v4M8 4.5v1" stroke="currentColor" stroke-width="1.5"/></svg><span>Underoppgaver lagres som metadata i hovedsakens BCF-beskrivelse, og opprettes ikke som egne BCF Topics. Oppdateringer lagres i prosjektet.</span></p>
 </main>
@@ -84,7 +84,6 @@ function controls(){
  const addButton=$('add')?.querySelector('button[type="submit"]');
  if(addButton)addButton.disabled=busy;
 }
-let importedTeam=[];
 function peopleFromBCF(){
  const known=[];
  const add=v=>{if(typeof v==='string'&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()))known.push({email:v.trim(),name:v.trim(),source:'BCF-saker'})};
@@ -96,31 +95,12 @@ function peopleFromBCF(){
 }
 function combineTeam(apiList){
  const merged=new Map();
- for(const m of [...peopleFromBCF(),...importedTeam,...apiList]){
+ for(const m of [...peopleFromBCF(),...apiList]){
   if(!m.email)continue;
   const key=m.email.toLowerCase();
   merged.set(key,{...(merged.get(key)||{}),...m});
  }
  return [...merged.values()].sort((a,b)=>(a.name||a.email).localeCompare(b.name||b.email,'nb'));
-}
-function showTeamImport(){
- $('teamImport').showModal();
-}
-function importTeam(){
- const input=$('teamPaste').value.trim();
- const seen=new Map();
- for(const line of input.split(/\r?\n/)){
-  const emails=line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g)||[];
-  for(const email of emails){
-   const display=line.replace(email,'').replace(/[\t;,]+/g,' ').replace(/\s+/g,' ').trim();
-   seen.set(email.toLowerCase(),{email,name:display||email,source:'Team-import'});
-  }
- }
- if(!seen.size){notify('Fant ingen gyldige e-postadresser i innlimt Team-liste.',true);return}
- importedTeam=[...new Map([...importedTeam,...seen.values()].map(v=>[v.email.toLowerCase(),v])).values()];
- teamMembers=combineTeam(teamMembers);
- $('teamImport').close();render();
- notify('Importert '+seen.size+' e-postadresser. Totalt '+teamMembers.length+' valgbare ansvarlige. Importen beholdes kun mens extensionen er åpen.');
 }
 let teamDiagnostics={workspace:'Ikke forsøkt',core:'Ikke forsøkt',rawCount:0,finalCount:0};
 async function loadProjectMembers(){
@@ -304,7 +284,7 @@ async function mutate(fn){
  }catch(e){notify('Lagring feilet: '+e.message,true);render();return false}finally{busy=false;controls()}
 }
 async function connect(){try{const c=await fetch('./config.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(c)cfg={...cfg,...c};if(!window.TrimbleConnectWorkspace||window.parent===window)throw Error('Åpne extensionen i Trimble Connect.');api=await TrimbleConnectWorkspace.connect(window.parent,(event,args)=>{if(event==='extension.accessToken'){const x=tokenOf(args);if(x){token=x;if(tokenEventResolve)tokenEventResolve(x)}}});project=await api.project.getCurrentProject();if(api.ui?.setMenu){try{await api.ui.setMenu({title:'BCF TaskFlow',icon:'https://trekasb.github.io/BCF-TaskFlow/icon.svg',command:'bcftaskflow',subMenus:[{title:'Oppgaver og Dashboard',icon:'https://trekasb.github.io/BCF-TaskFlow/icon.svg',command:'bcftaskflow_open'}]});}catch(e){console.warn('Prosjektmeny ikke tilgjengelig i denne visningen',e)}}token=await freshToken();mode='live';await load()}catch(e){mode='offline';notify(e.message,true);controls()}}
-$('subAssignmentCancel').onclick=()=>$('subAssignmentDlg').close();$('subAssignmentForm').onsubmit=saveSubAssignment;$('teamImportOpen').onclick=showTeamImport;$('teamImportCancel').onclick=()=>$('teamImport').close();$('teamImportSave').onclick=importTeam;$('teamDebug').onclick=showTeamDiagnostics;$('newMain').onclick=openMainDialog;$('mainCancel').onclick=()=>$('mainDlg').close();$('mainForm').onsubmit=createMain;$('tabTasks').onclick=()=>switchView('tasks');$('tabDashboard').onclick=()=>switchView('dashboard');$('tabKanban').onclick=()=>switchView('kanban');$('search').oninput=render;$('refresh').onclick=load;connect();
+$('subAssignmentCancel').onclick=()=>$('subAssignmentDlg').close();$('subAssignmentForm').onsubmit=saveSubAssignment;$('teamDebug').onclick=showTeamDiagnostics;$('newMain').onclick=openMainDialog;$('mainCancel').onclick=()=>$('mainDlg').close();$('mainForm').onsubmit=createMain;$('tabTasks').onclick=()=>switchView('tasks');$('tabDashboard').onclick=()=>switchView('dashboard');$('tabKanban').onclick=()=>switchView('kanban');$('search').oninput=render;$('refresh').onclick=load;connect();
 })();
 </script>
 </body>
