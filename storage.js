@@ -38,14 +38,16 @@ function read(topic){
   if(b===-1)throw Error('Ufullstendige TaskFlow-metadata – lagring avbrutt');
   try{
    const raw=d.slice(a+start.length,b).trim(),obj=JSON.parse(compact?decode(raw):raw);
-   if(!Array.isArray(obj.tasks))throw Error('Underoppgavelisten mangler');
-   return {tasks:obj.tasks,plain:(d.slice(0,a)+d.slice(b+end.length)).trim()};
+   const taskList=Array.isArray(obj.tasks)?obj.tasks:(Array.isArray(obj.t)&&Array.isArray(obj.f)?obj.t.map(row=>Object.fromEntries(obj.f.flatMap((key,i)=>row[i]===null||row[i]===undefined?[]:[[key,row[i]]]))):null);
+   if(!Array.isArray(taskList))throw Error('Underoppgavelisten mangler');
+   return {tasks:taskList,plain:(d.slice(0,a)+d.slice(b+end.length)).trim()};
   }catch(e){throw Error('Kan ikke lese TaskFlow-metadata: '+e.message+'. Ingen data overskrives.')}
  }
  return {tasks:[],plain:d};
 }
 function pack(plain,tasks){
- const body=JSON.stringify({schemaVersion:3,tasks});
+ const fields=[...new Set(tasks.flatMap(t=>Object.keys(t)))].sort();
+ const body=JSON.stringify({v:3,f:fields,t:tasks.map(t=>fields.map(k=>t[k]===undefined?null:t[k]))});
  const d=(plain?String(plain).trim()+'\n\n':'')+V3A+encode(body)+V3B;
  if(d.length>LIMIT)throw Error('BCF tillater maks '+LIMIT+' tegn i beskrivelsen. Komprimert TaskFlow-data krever '+d.length+' tegn. Ingen endringer lagret. Bruk en kortere hovedbeskrivelse eller færre underoppgaver inntil ekstern lagring er etablert.');
  return d;
