@@ -172,7 +172,7 @@ function openSubAssignment(subId){
  if(sub.assignee&&!users.some(u=>u.value===sub.assignee))users.unshift({value:sub.assignee,label:sub.assignee});
  window.BCFTaskFlowPicker.attach($('subAssignmentOwner'),users,{allowCustom:true,placeholder:'Velg fra Team eller søk …'});
  $('subAssignmentOwner').value=sub.assignee||'';
- $('subAssignmentDue').value= /^\\d{4}-\\d{2}-\\d{2}$/.test(sub.dueDate||'')?sub.dueDate:'';
+ $('subAssignmentDue').value= /^\d{4}-\d{2}-\d{2}$/.test(sub.dueDate||'')?sub.dueDate:'';
  $('subAssignmentDlg').showModal();
 }
 async function saveSubAssignment(e){
