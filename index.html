@@ -36,7 +36,7 @@ header .brand-logo{height:auto;max-height:40px;width:148px;object-fit:contain;fl
 <div id="tasksView"><div class="grid"><section class="panel list-panel" aria-labelledby="parents-heading"><div class="list-header"><h2 id="parents-heading">Hovedoppgaver <span class="section-kicker">BCF TOPICS</span></h2><div class="search-wrap"><input id="search" aria-label="Søk i hovedoppgaver" placeholder="Søk i BCF Topics …" type="search"></div></div><div id="parents"></div><div class="list-footer">Velg en hovedoppgave for å se underoppgaver.</div></section><section class="panel" id="details" aria-label="Oppgavedetaljer"><div class="empty-state initial-empty"><div class="empty-icon" aria-hidden="true">✓</div><strong>Velg en hovedoppgave</strong><p>Detaljer og underoppgaver vises her.</p></div></section></div></div><div id="dashboard" role="tabpanel" aria-label="Dashboard" hidden></div><div id="kanban" role="tabpanel" aria-label="Kanban" hidden></div>
 <p class="footer-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor"/><path d="M8 7v4M8 4.5v1" stroke="currentColor" stroke-width="1.5"/></svg><span>Underoppgaver lagres som metadata i hovedsakens BCF-beskrivelse, og opprettes ikke som egne BCF Topics. Oppdateringer lagres i prosjektet.</span></p>
 </main>
-<script src="./picker.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script><script src="./dashboard.js"></script><script src="./kanban.js"></script>
+<script src="./storage.js"></script><script src="./picker.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script><script src="./dashboard.js"></script><script src="./kanban.js"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
@@ -54,14 +54,8 @@ const weightLabel=n=>n===1?'Enkel':n===2?'Avgrenset':n===3?'Moderat':n===4?'Krev
 const weightOptions=current=>Array.from({length:5},(_,i)=>{const n=i+1;return '<option value="'+n+'" '+(Number(current)===n?'selected':'')+'>'+n+' – '+weightLabel(n)+'</option>'}).join('');
 const fmt=x=>x?new Date(x).toLocaleString('nb-NO',{dateStyle:'medium',timeStyle:'short'}):'–';
 const meta=x=>Array.isArray(x)?x.join(', '):x||'–';
-const getRecord=t=>{
- const d=String(t.description||'');const a=d.indexOf(START),b=d.indexOf(END,a+START.length);
- if(a===-1||b===-1)return {tasks:[],plain:d};
- const raw=d.slice(a+START.length,b).trim();
- try{const v=JSON.parse(raw);return {tasks:Array.isArray(v.tasks)?v.tasks:[],plain:(d.slice(0,a)+d.slice(b+END.length)).trim()};}
- catch(e){throw Error('Ugyldig TaskFlow JSON for '+title(t)+'. Ingen endringer blir lagret.')}
-};
-function pack(plain,tasks){return (plain?plain.trim()+'\n\n':'')+START+'\n'+JSON.stringify({schemaVersion:2,tasks},null,2)+'\n'+END;}
+const getRecord=t=>window.BCFTaskFlowStorage.read(t);
+const pack=(plain,tasks)=>window.BCFTaskFlowStorage.pack(plain,tasks);
 function progress(tasks){const weight=tasks.reduce((a,t)=>a+Number(t.weight||0),0);return weight>0?Math.round(100*tasks.reduce((a,t)=>a+Number(t.weight||0)*completion(t)/100,0)/weight):null}
 function notify(s,isError=false){$('notice').textContent=s;$('notice').className=isError?'error':'success'}
 const tokenOf=p=>{const v=p?.data??p;return typeof v==='string'&&!['pending','denied'].includes(v)?v:(v?.accessToken||v?.access_token||null)};
@@ -262,7 +256,7 @@ async function mutate(fn){
  const current=getRecord(fresh);
  const next=fn(current.tasks.map(x=>({...x})));
  if(next.length>100)throw Error('Maksimalt 100 underoppgaver i én hovedsak.');
- const description=pack(current.plain,next);if(description.length>55000)throw Error('For mange underoppgaver for BCF-beskrivelsen.');
+ const description=pack(current.plain,next);// Storage layer enforces the BCF API description limit of 2048 characters.
  if(mode==='live'){await req('PUT','/topics/'+encodeURIComponent(selected),{description});await load()}
  else{t.description=description;render()}
  notify('Underoppgavene er '+(mode==='demo'?'oppdatert i demo.':'lagret på hovedoppgaven i BCF Topics.'));
