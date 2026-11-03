@@ -61,3 +61,6 @@ Kanban grupperer nå underoppgaver umiddelbart under sin BCF-hovedoppgave. Hoved
 
 ## BCFT-inspirert grafdashboard – samlet og separat
 Chart.js-grafer med samme prinsipp som BCFT: samlet statistikk for **alle saker** (hver BCF-hovedsak + hver registrerte TaskFlow-underoppgave) samt separate grafer for hovedsaker og underoppgaver. Topic: fagfordeling, status per fag og separate status/fag-diagrammer. VDC: status, prioritet, Created vs Closed når datofelt finnes, separat etter sakstype. Assignee: antall saker per ansvarlig totalt og på hvert nivå. Periode, fag og bruker filtrerer sakene. Underoppgaver uten egne opprettelses-/lukkedatoer vises i øyeblikksstatistikken, men ikke i uketrender. Ikke forveksle totale sakstall med antall BCF Topics: underoppgaver er metadata i beskrivelsesfeltet.
+
+## Endre ansvarlig og frist direkte i Oppgaver
+Hver rad under Underoppgaver har knappen «Rediger ansvarlig / frist». Den åpner en dialog med ansvarlig (søkbar Team-liste, med støtte for eksisterende e-postadresse) og tidsfrist (datovelger). Lagre oppdaterer underoppgavens `assignee` og `dueDate` i TaskFlow-metadata i hovedsakens BCF-beskrivelse. Samme verdier brukes i Kanban. En ny frist kan overskrive en gammel, og begge felter kan tømmes. Denne endringen endrer ikke hovedsakens BCF `assigned_to` eller `due_date`.
