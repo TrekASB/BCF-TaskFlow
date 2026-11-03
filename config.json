@@ -1,8 +1,8 @@
 {
   "app": "BCFTaskFlow",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "apiBase": "https://open21.connect.trimble.com/bcf/3.0/projects",
-  "storage": "parent-topic-description",
+  "storage": "compressed-v3-in-parent-topic-description",
   "schemaVersion": 2,
   "completedStatuses": [
     "done",
@@ -12,7 +12,7 @@
     "ferdig"
   ],
   "maxSubtasks": 100,
-  "notes": "Underoppgaver lagres i et merket JSON-blokk på hovedsakens description. Ingen separate BCF Topics blir opprettet.",
+  "notes": "v2 metadata leses automatisk. Nye lagringer bruker komprimert v3-format med kontroll mot BCF API-grense 2048 tegn. Større datamengder krever separat prosjektlagring.",
   "weightScale": {
     "min": 1,
     "max": 5,
@@ -25,5 +25,6 @@
     75,
     100
   ],
-  "progressFormula": "sum(weight * completion/100) / sum(weight) * 100"
+  "progressFormula": "sum(weight * completion/100) / sum(weight) * 100",
+  "descriptionMaxLength": 2048
 }
