@@ -135,10 +135,18 @@ function showTeamDiagnostics(){
  alert('BCFTaskFlow – Team-diagnostikk\\nProsjekt: '+(project?.name||'ukjent')+
  '\\nWorkspace getMembers: '+teamDiagnostics.workspace+
  '\\nCore users: '+teamDiagnostics.core+
+ '\\nBCF-prosjektvalg: '+(teamDiagnostics.bcfUserCount||0)+' brukere'+
  '\\nMedlemmer i Ansvarlig-listen: '+teamDiagnostics.finalCount+
  '\\n\\nIngen tilgangstoken eller persondata vises her.');
 }
-async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];const ext=await req('GET','/extensions').catch(()=>null);topicStatuses=Array.isArray(ext?.topic_status)?ext.topic_status.filter(v=>typeof v==='string'&&v):[];topicTypes=Array.isArray(ext?.topic_type)?ext.topic_type:[];topicPriorities=Array.isArray(ext?.priority)?ext.priority:[];topicLabels=window.BCFTaskFlowPicker.labels(ext);teamMembers=await loadProjectMembers();if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet. Ansvarlige: '+teamMembers.length+' tilgjengelige ('+(teamDiagnostics.apiCount||0)+' fra Team API)'+'.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
+async function load(){busy=true;controls();try{const r=await req('GET','/topics');topics=Array.isArray(r)?r:Array.isArray(r?.topics)?r.topics:[];const ext=await req('GET','/extensions').catch(()=>null);topicStatuses=Array.isArray(ext?.topic_status)?ext.topic_status.filter(v=>typeof v==='string'&&v):[];topicTypes=Array.isArray(ext?.topic_type)?ext.topic_type:[];topicPriorities=Array.isArray(ext?.priority)?ext.priority:[];topicLabels=window.BCFTaskFlowPicker.labels(ext);
+teamMembers=await loadProjectMembers();
+const available=Array.isArray(ext?.users)?ext.users:Array.isArray(ext?.assigned_to)?ext.assigned_to:[];
+const bcfUsers=available.map(v=>typeof v==='string'?{email:v,name:v}:v).filter(x=>x&&x.email);
+const teamApiMembers=teamDiagnostics.apiCount||0;
+teamMembers=combineTeam([...teamMembers,...bcfUsers]);
+teamDiagnostics.bcfUserCount=bcfUsers.length;
+teamDiagnostics.finalCount=teamMembers.length;if(!topics.some(t=>id(t)===selected))selected=id(topics[0]);render();notify('Tilkoblet. '+topics.length+' BCF Topics hentet. Ansvarlige: '+teamMembers.length+' tilgjengelige ('+teamApiMembers+' fra Team API, '+(teamDiagnostics.bcfUserCount||0)+' fra BCF-prosjektvalg)'+'.');}catch(e){notify('Henting feilet: '+e.message,true)}finally{busy=false;controls()}}
 // Presentation only: all API, storage, validation and mutation logic is unchanged.
 const statusTone=s=>cfg.completedStatuses.includes(String(s).toLowerCase())?'done':['in progress','pågår','active'].includes(String(s).toLowerCase())?'active':'new';
 function teamValues(){return [...new Set(teamMembers.map(m=>m.email).filter(Boolean))].sort()}
