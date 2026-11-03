@@ -193,7 +193,7 @@ async function saveParentKanban(parentId,payload,plain){
   notify('Hovedsaken er oppdatert i BCF Topics.');
  }finally{busy=false;controls()}
 }
-async function saveKanban(parentId,fn){const previous=selected;selected=parentId;try{await mutate(fn)}finally{selected=previous}if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues(),saveParentKanban,topicStatuses)}
+async function saveKanban(parentId,fn){const previous=selected;selected=parentId;try{const saved=await mutate(fn);if(!saved)throw Error('Lagring mislyktes. Ingen endringer er bekreftet.')}finally{selected=previous}if(activeView==='kanban'&&window.BCFTaskFlowKanban)window.BCFTaskFlowKanban.render(topics,getRecord,saveKanban,teamMembers,tagValues(),saveParentKanban,topicStatuses)}
 function openFromDashboard(guid){selected=guid;switchView('tasks');render();}
 function switchView(view){
  activeView=view;
